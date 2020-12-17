@@ -3,6 +3,8 @@
         <div id="nav">
         </div>
         <router-view/>
+        <!-- set progressbar -->
+        <vue-progress-bar></vue-progress-bar>
     </div>
 </template>
 
@@ -39,12 +41,12 @@
 */
 </style>
 <script>
-
+//import gapi from './api'
 // eslint-disable-next-line
 //const gapi = require("./http_apis.google.com_js_api");
 //var $script = require('scriptjs') ;
 //$script("https://apis.google.com/js/api.js", 'gapi') ;
-var parseMessage = require('gmail-api-parse-message');
+
 import moment from "moment" ;
 //const {google} = require('googleapis');
 
@@ -58,7 +60,7 @@ var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/res
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-var SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
+var SCOPES = 'https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify https://mail.google.com/';
 moment.locale('fr');
 import {mapState} from "vuex";
 
@@ -87,21 +89,41 @@ export default {
     mounted() {
         this.handleClientLoad();
 
+        //  [App.vue specific] When App.vue is finish loading finish the progress bar
+        this.$Progress.finish()
+
         // this.updateSigninStatus();
     },
+    created () {
+        //  [App.vue specific] When App.vue is first loaded start the progress bar
+        this.$Progress.start()
+        //  hook the progress bar to start before we move router-view
+        this.$router.beforeEach((to, from, next) => {
+            //  does the page we want to go to have a meta.progress object
+            if (to.meta.progress !== undefined) {
+                let meta = to.meta.progress
+                // parse meta tags
+                this.$Progress.parseMeta(meta)
+            }
+            //  start the progress bar
+            this.$Progress.start()
+            //  continue to next page
+            next()
+        })
+        //  hook the progress bar to finish after we've finished moving router-view
+        // eslint-disable-next-line no-unused-vars
+        this.$router.afterEach((to, from) => {
+            //  finish the progress bar
+            this.$Progress.finish()
+        })
+
+        this.handleClientLoad();
+    }
+    ,
+    beforeCreate() {
+
+    },
     methods: {
-        showMessage(event) {
-            let messageId = event.target.getAttribute('data-message-id');
-            // eslint-disable-next-line no-undef
-            gapi.client.gmail.users.message.get({
-                userId: 'me',
-                id: messageId
-            }).then(function (response) {
-                var parsedMessage = parseMessage(response);
-                console.log(parsedMessage);
-            })
-                .catch(err => console.log(err));
-        },
         inbox() {
             // eslint-disable-next-line no-undef
             gapi.client.gmail.users.messages.list({
@@ -115,6 +137,7 @@ export default {
                     this.$store.dispatch('updateTotal', {
                         inbox: response.result.resultSizeEstimate
                     });
+
                     for (var i = 0; i < responses.length; i++) {
                         // eslint-disable-next-line no-undef
                         gapi.client.gmail.users.messages.get({
@@ -147,13 +170,14 @@ export default {
          *  Called when the signed in status changes, to update the UI
          *  appropriately. After a sign-in, the API is called.
          */
-        updateSigninStatus(isSignedIn) {
+         updateSigninStatus(isSignedIn) {
             if (isSignedIn) {
                 this.buttonConnexion = true;
-                this.inbox();
-                this.$store.dispatch('getAllTotal') ;
+                //this.inbox();
+                //this.$store.dispatch('getAllTotal') ;
             } else {
                 this.buttonConnexion = false;
+              this.handleAuthClick() ;
             }
         }
         ,
@@ -161,7 +185,7 @@ export default {
          *  Initializes the API client library and sets up sign-in state
          *  listeners.
          */
-        initClient() {
+         initClient() {
             let update = this.updateSigninStatus;
             // eslint-disable-next-line no-undef
             gapi.client.init({
