@@ -145,8 +145,6 @@ export default {
                             'id': (responses[i]).id
                         }).then((response) => {
                                 let result = response.result;
-                                console.log(result.internalDate);
-                                console.log(moment().to(+result.internalDate));
                                 result.internalDate = moment().to(+result.internalDate);
 
                                 this.messages.push(result);

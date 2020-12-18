@@ -3327,7 +3327,7 @@ domhandler@^2.3.0:
   dependencies:
     domelementtype "1"
 
-dompurify@^2.2.0:
+dompurify@^2.2.0, dompurify@^2.2.4:
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-2.2.4.tgz#a98cd182b729bdd8715c3eb7a8bf8eafb2ff7410"
   integrity sha512-jE21SelIgWrGKoXGfGPA524Zt1IJFBnktwfFMHDlEYRx5FZOdc+4eEH9mkA6PuhExrq3HVpJnY8hMYUzAMl0OA==
@@ -8666,6 +8666,11 @@ vue-eslint-parser@^7.0.0:
     espree "^6.2.1"
     esquery "^1.0.1"
     lodash "^4.17.15"
+
+vue-gapi@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/vue-gapi/-/vue-gapi-0.5.0.tgz#8fa3516b4cb49828bfdfefb5389633036928d24e"
+  integrity sha512-20ZYia4TOXKWvuUqzlC04fIpoAS6PJ2VXC/DwdPOqLdRSbfPlz6GgaO4yeE8lkl4PK1nXMUWuE3yjfHOgztbeQ==
 
 vue-hot-reload-api@^2.3.0:
   version "2.3.4"

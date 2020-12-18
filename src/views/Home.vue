@@ -12,7 +12,8 @@
                                 <div class="text-center p-xs font-normal">
                                     <div class="input-group">
                                         <input type="text" class="form-control input-sm"
-                                               placeholder="Rechercher dans les messages..." v-model="searchBar.item" @input.prevent="search">
+                                               placeholder="Rechercher dans les messages..." v-model="searchBar.item"
+                                               @input.prevent="search">
                                         <span class="input-group-btn">
 						<button type="button" class="btn btn btn-default">Recherche </button>
 					</span>
@@ -24,7 +25,8 @@
                                 <div class="row">
                                     <div class="col-md-6 col-md-6 col-sm-6 col-xs-12 mg-b-15">
                                         <div class="btn-group">
-                                            <button class="btn btn-default btn-sm" @click.prevent="refreshPage"><i class="fa fa-refresh"></i>
+                                            <button class="btn btn-default btn-sm" @click.prevent="refreshPage"><i
+                                                class="fa fa-refresh"></i>
                                                 Actualiser
                                             </button>
                                             <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i>
@@ -33,7 +35,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-md-6 col-sm-6 col-xs-12 mailbox-pagination mg-b-15">
-                                        <label style="margin-right: 10px; font-weight: 400;">{{ total }}</label>
+                                        <label style="margin-right: 10px; font-weight: 400;">{{ totalMessage  + 'sur' + this.$store.state.messages.length }}</label>
                                         <div class="btn-group">
                                             <button class="btn btn-default btn-sm"><i class="fa fa-arrow-left"></i>
                                             </button>
@@ -46,7 +48,11 @@
                                 <div class="table-responsive">
                                     <table class="table table-hover table-mailbox">
                                         <tbody>
-                                        <tr class="" v-for="message in messages" :class=" isUnread(message.labelIds) ? 'unread' : '' "  v-bind:key="message.id"  :data-message-id="message.id" @click.prevent="showMessage" style="cursor: pointer">
+                                        <tr class="" v-for="message in messages"
+                                            :class=" isUnread(message.labelIds) ? 'unread' : '' "
+                                            v-bind:key="message.id" :data-message-id="message.id"
+                                            @click.prevent="showMessage"
+                                            style="cursor: pointer">
                                             <td class="">
                                                 <div class="checkbox checkbox-single checkbox-success">
                                                     <input type="checkbox" checked>
@@ -54,42 +60,46 @@
                                                 </div>
                                             </td>
                                             <td><a href="view.php">{{ message.headers.from }}</a></td>
-                                            <td><a href="view.php">{{ truncate( message.snippet , 0, 70  )  }}</a>
+                                            <td><a href="view.php">{{ truncate(message.snippet, 0, 70) }}</a>
                                             </td>
-                                            <td> <i class="" :class=" hasAttachment(message.attachments) ? 'fa fa-paperclip' : '' " ></i></td>
-                                            <td class="text-right mail-date">{{ moment (new Date( +message.internalDate )) .format('LL') }}</td>
+                                            <td><i class=""
+                                                   :class=" hasAttachment(message.attachments) ? 'fa fa-paperclip' : '' "></i>
+                                            </td>
+                                            <td class="text-right mail-date">
+                                                {{ moment(new Date(+message.internalDate)).format('LL') }}
+                                            </td>
 
                                         </tr>
-<!--
-                                        <tr>
-                                            <td class="">
-                                                <div class="checkbox">
-                                                    <input type="checkbox">
-                                                    <label></label>
-                                                </div>
-                                            </td>
-                                            <td><a href="view.php">Eminem</a></td>
-                                            <td><a href="view.php">Praesent nec nisl sed neque ornare maximus at ac
-                                                enim.</a>
-                                            </td>
-                                            <td></td>
-                                            <td class="text-right mail-date">14 déc 2020</td>
-                                        </tr>
+                                        <!--
+                                                                                <tr>
+                                                                                    <td class="">
+                                                                                        <div class="checkbox">
+                                                                                            <input type="checkbox">
+                                                                                            <label></label>
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td><a href="view.php">Eminem</a></td>
+                                                                                    <td><a href="view.php">Praesent nec nisl sed neque ornare maximus at ac
+                                                                                        enim.</a>
+                                                                                    </td>
+                                                                                    <td></td>
+                                                                                    <td class="text-right mail-date">14 déc 2020</td>
+                                                                                </tr>
 
-                                        <tr class="unread active">
-                                            <td class="">
-                                                <div class="checkbox checkbox-single">
-                                                    <input type="checkbox" checked>
-                                                    <label></label>
-                                                </div>
-                                            </td>
-                                            <td><a href="view.php">Chris Brown</a></td>
-                                            <td><a href="view.php">Aenean hendrerit ligula eget augue gravida
-                                                semper.</a></td>
-                                            <td><i class="fa fa-paperclip"></i></td>
-                                            <td class="text-right mail-date">14 déc 2020</td>
-                                        </tr>
-                                        -->
+                                                                                <tr class="unread active">
+                                                                                    <td class="">
+                                                                                        <div class="checkbox checkbox-single">
+                                                                                            <input type="checkbox" checked>
+                                                                                            <label></label>
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td><a href="view.php">Chris Brown</a></td>
+                                                                                    <td><a href="view.php">Aenean hendrerit ligula eget augue gravida
+                                                                                        semper.</a></td>
+                                                                                    <td><i class="fa fa-paperclip"></i></td>
+                                                                                    <td class="text-right mail-date">14 déc 2020</td>
+                                                                                </tr>
+                                                                                -->
                                         </tbody>
                                     </table>
                                 </div>
@@ -113,100 +123,120 @@ import TopBar from "../components/TopBar";
 import Side from "../components/Side" ;
 import Footer from "../components/Footer";
 import moment from "moment";
-import { mapState } from "vuex" ;
-//import AttachmentInfo from "@/Attachment";
-moment.locale('fr') ;
+import {mapState} from "vuex" ;
+
+moment.locale('fr');
 var parseMessage = require('gmail-api-parse-message');
 export default {
     name: 'Home',
-    data(){
-      return {
-          moment ,
-          //messages:[],
-          total: '',
-          searchBar: {
-              item: ''
-          }
-      }
+    data() {
+        return {
+            moment,
+            //messages:[],
+            total: '',
+            searchBar: {
+                item: ''
+            }
+        }
     },
-    props: ['labelId'] ,
-    computed : {
-        ...mapState(['messages'])
+    props: ['labelId'],
+    computed: {
+        ...mapState(['messages', 'totalMessage'])
     },
     components: {
         TopBar,
         Side,
         Footer
     }, mounted() {
+
+        // eslint-disable-next-line no-undef
+        if (typeof gapi.client === "undefined") {
+
+            setTimeout(()=>{
+                this.$store.dispatch('getAllMessageInLabel', this.labelId);
+            }, 10000) ;
+        } else {
+            this.$store.dispatch('getAllMessageInLabel', this.labelId);
+        }
         //this.inbox();
         /*
         if (this.messages.length <2) {
             this.inbox();
         }
         */
-
     },
     methods: {
-      isUnread(tabs){
-      return tabs.some( (element) => element === 'UNREAD' ) ;
-      },
-        truncate(chaine, offset, length){
+        hasPreviousPage(){
+
+
+        },
+        hasNextPage(){
+
+        },
+        getNextPageMessage(){
+          this.$store.dispatch('getAllMessageInLabel')   ;
+        },
+        isUnread(tabs) {
+            return tabs.some((element) => element === 'UNREAD');
+        },
+        truncate(chaine, offset, length) {
             if (typeof length == 'undefined') {
-                length = 70 ;
+                length = 70;
             }
-            if (chaine.length< +length){
-                return chaine ;
-            }else {
-                return chaine.substring(offset, length) + '...' ;
+            if (chaine.length < +length) {
+                return chaine;
+            } else {
+                return chaine.substring(offset, length) + '...';
             }
         },
-        refreshPage(){
+        refreshPage() {
+            this.$store.dispatch('getAllMessageInLabel', this.labelId) ;
             //this.$router.go() ;
             //this.inbox() ;
             //this.$router.push({ name: 'Home'}) ;
         },
-        showMessage(event){
+        showMessage(event) {
 
-            let messageId = event.currentTarget.getAttribute('data-message-id') ;
+            let messageId = event.currentTarget.getAttribute('data-message-id');
 
-            console.log(messageId) ;
-            this.$router.push({ name: 'Views', params: { messageId }}) ;
+
+            console.log(messageId);
+            this.$router.push({name: 'Views', query: {messageId}});
         },
-      getMessageInLabelInbox() {
-        //let labelName = event.currentTarget.getAttribute('data-label-id');
-        // eslint-disable-next-line no-undef
-        gapi.client.gmail.users.messages.list({
-          'userId': 'me',
-          'labelIds': 'INBOX'
-        }).then((response) => {
-              //console.log(response.result) ;
-              let responses = response.result.messages;
-              let messages = [];
-              for (var i = 0; i < responses.length; i++) {
-                // eslint-disable-next-line no-undef
-                gapi.client.gmail.users.messages.get({
-                  'userId': 'me',
-                  'id': (responses[i]).id
-                }).then((response) => {
-                      let result = parseMessage(response.result);
+        getMessageInLabelInbox() {
+            //let labelName = event.currentTarget.getAttribute('data-label-id');
+            // eslint-disable-next-line no-undef
+            gapi.client.gmail.users.messages.list({
+                'userId': 'me',
+                'labelIds': 'INBOX'
+            }).then((response) => {
+                    let responses = response.result.messages;
+                    let messages = [];
+                    for (var i = 0; i < responses.length; i++) {
+                        // eslint-disable-next-line no-undef
+                        gapi.client.gmail.users.messages.get({
+                            'userId': 'me',
+                            'id': (responses[i]).id
+                        }).then((response) => {
+                                let result = parseMessage(response.result);
 
-                      result.internalDate = moment().to(+result.internalDate);
+                                result.internalDate = moment().to(+result.internalDate);
 
-                      messages.push(result);
+                                messages.push(result);
+                            }
+                        ).catch(err => console.log(err));
                     }
-                ).catch(err => console.log(err));
-              }
-              this.$store.dispatch('setMessages', messages);
-            }
-        ).catch((err) => console.log(err));
+                    this.$store.dispatch('setMessages', messages);
+                }
+            ).catch((err) => console.log(err));
 
-      },
-        hasAttachment(attachment){
-          return (typeof  attachment !== 'undefined'  ) ? Array.isArray(attachment) : false ;
         },
-      inbox(){
+        hasAttachment(attachment) {
+            return (typeof attachment !== 'undefined') ? Array.isArray(attachment) : false;
+        },
+        inbox() {
             if (this.labelId.length < 2) {
-                this.labelId = 'INBOX' ;
+                this.labelId = 'INBOX';
             }
             //document.querySelector('Side').click() ;
             /*
@@ -214,6 +244,39 @@ export default {
                 this.labelId = 'INBOX' ;
             }
             */
+            let labelName = this.labelId;
+            // eslint-disable-next-line no-undef
+            gapi.client.gmail.users.messages.list({
+                'userId': 'me',
+                'labelIds': labelName
+            }).then((response) => {
+                    this.localTotal = response.result.resultSizeEstimate;
+                    var responses = response.result.messages;
+                    //let messages = [];
+                    if (typeof responses !== "undefined") {
+
+                        this.$store.dispatch('setMessages', []);
+                        for (let i = 0; i < responses.length; i++) {
+                            // eslint-disable-next-line no-undef
+                            gapi.client.gmail.users.messages.get({
+                                'userId': 'me',
+                                'id': (responses[i]).id
+                            }).then((response) => {
+                                    let result = parseMessage(response.result);
+
+                                    //messages.push(result);
+
+                                console.log(result) ;
+                                    //Tres important on met à jour le data store
+                                    this.$store.dispatch('pushMessage', result);
+
+                                }
+                            ).catch(err => console.log(err));
+                        }
+
+                    }
+                }
+            ).catch((err) => console.log(err));
         },
 
         inboxx() {
@@ -222,10 +285,10 @@ export default {
                 'userId': 'me',
                 'labelIds': this.labelId
             }).then((response) => {
-                this.total = response.result.resultSizeEstimate ;
+                    this.total = response.result.resultSizeEstimate;
                     let responses = response.result.messages;
                     //let result = [] ;
-                let messages = [];
+                    let messages = [];
                     for (var i = 0; i < responses.length; i++) {
                         // eslint-disable-next-line no-undef
                         gapi.client.gmail.users.messages.get({
@@ -233,16 +296,16 @@ export default {
                             'id': (responses[i]).id
                         }).then((response) => {
                                 //let result = response.result;
-                                let result = parseMessage(response.result)  ;
+                                let result = parseMessage(response.result);
 
                                 result.internalDate = moment().to(+result.internalDate);
 
-                            messages.push(result);
+                                messages.push(result);
 
                             }
                         ).catch(err => console.log(err));
                     }
-                this.$store.dispatch('setMessages', messages);
+                    this.$store.dispatch('setMessages', messages);
                 }
             ).catch((err) => console.log(err));
         }

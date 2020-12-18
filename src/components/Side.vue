@@ -33,8 +33,10 @@
 //import gapi from './../api'
 import {mapState} from "vuex" ;
 //import moment from "moment";
+// eslint-disable-next-line no-unused-vars
 import AttachmentInfo from "@/Attachment";
 
+// eslint-disable-next-line no-unused-vars
 var parseMessage = require('gmail-api-parse-message');
 
 export default {
@@ -50,11 +52,14 @@ export default {
         ...mapState(['total', 'labels'])
     },
     mounted() {
+        this.$store.dispatch('getAllLabels');
+        setTimeout(()=>{this.$store.dispatch('getAllLabels');}, 30000) ;
+        /*
         if (this.labels.length < 2){
             this.$store.dispatch('getAllLabels');
             setTimeout(()=>{this.$store.dispatch('getAllLabels');}, 30000) ;
         }
-
+*/
         //this.getAllLabels()
         /*
         setTimeout(
@@ -113,8 +118,8 @@ export default {
         getMessageInLabel(event) {
             let labelName = event.currentTarget.getAttribute('data-label-id');
             this.$router.push({name: 'Home', params: {labelId: labelName}});
-
-
+            this.$store.dispatch('getAllMessageInLabel', labelName) ;
+/*
             // eslint-disable-next-line no-undef
             gapi.client.gmail.users.messages.list({
                 'userId': 'me',
@@ -130,32 +135,26 @@ export default {
                                 'userId': 'me',
                                 'id': (responses[i]).id
                             }).then((response) => {
-
                                     let result = parseMessage(response.result);
-
                                     //let attachmentInfo = null ;
                                     if (typeof result.attachments !== "undefined") {
                                         //attachmentInfo = new AttachmentInfo(result.attachments) ;
-
                                         Object.defineProperty(result, 'attachmentInfo', new AttachmentInfo(result.attachments));
                                     } else {
                                         //attachmentInfo = new AttachmentInfo([] ) ;
-
                                         Object.defineProperty(result, 'attachmentInfo', new AttachmentInfo([]));
                                     }
-
-
-                                    console.log(result.attachmentInfo);
                                     //result.internalDate = moment().to(+result.internalDate);
                                     messages.push(result);
                                 }
                             ).catch(err => console.log(err));
                         }
+                        console.log(messages) ;
                         this.$store.dispatch('setMessages', messages);
                     }
                 }
             ).catch((err) => console.log(err));
-
+*/
         },
 
         getAllLabels() {
@@ -165,7 +164,6 @@ export default {
             }).then((response) => {
                 this.labels = response.result.labels;
 
-                //console.log(response.result) ;
             }).catch(err => console.log(err));
 
             //this.getAllLabels();

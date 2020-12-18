@@ -44,7 +44,11 @@
                             <div class="border-bottom border-left border-right bg-white mg-tb-15"
                                  v-if="hasAttachment(message.attachments)">
                                 <p class="m-b-md">
-                                    <span><i class="fa fa-paperclip"></i> {{ message.attachments.length }} fichier{{ message.attachments.length==1 ? '':'s'}} joint{{ message.attachments.length==1 ? '':'s'}} </span>
+                                    <span><i class="fa fa-paperclip"></i> {{
+                                            message.attachments.length
+                                        }} fichier{{
+                                            message.attachments.length == 1 ? '' : 's'
+                                        }} joint{{ message.attachments.length == 1 ? '' : 's' }} </span>
                                 </p>
 
                                 <div>
@@ -53,10 +57,11 @@
                                              v-for="attachment in message.attachments" :key="attachment.attachmentId">
                                             <div class="hpanel">
                                                 <div class="panel-body file-body incon-ctn-view">
-                                                    <i class="fa text-info " :class="getIconForAttachment(attachment.mimeType)"></i>
+                                                    <i class="fa text-info "
+                                                       :class="getIconForAttachment(attachment.mimeType)"></i>
                                                 </div>
                                                 <div class="panel-footer">
-                                                    <a href="" @click.prevent="getAttachmentFile"
+                                                    <a href="" @click.prevent="downloadAttachmentFile"
                                                        :data-attachment-message-id="message.id"
                                                        :data-attachment-id="attachment.attachmentId"
                                                        :data-attachment-size="attachment.size"
@@ -76,7 +81,9 @@
                                     <button class="btn btn-default"><i class="fa fa-reply"></i> Répondre</button>
                                     <button class="btn btn-default"><i class="fa fa-arrow-right"></i> Transférer
                                     </button>
-                                    <button class="btn btn-default" @click.prevent="printAsPdf"><i class="fa fa-print"></i> Imprimer</button>
+                                    <button class="btn btn-default" @click.prevent="printAsPdf"><i
+                                        class="fa fa-print"></i> Imprimer
+                                    </button>
                                     <button class="btn btn-default" @click.prevent="deleteMessage"><i
                                         class="fa fa-trash-o"></i> Supprimer
                                     </button>
@@ -96,9 +103,17 @@ import moment from "moment" ;
 import TopBar from "../components/TopBar";
 import Side from "../components/Side" ;
 import Footer from "../components/Footer";
-const { jsPDF } = require("jspdf"); // will automatically load the node version
+// Load the full build.
+var _ = require('lodash');
+const {jsPDF} = require("jspdf"); // will automatically load the node version
+/*
 const html2pdf = require("html2pdf.js") ;
+
 import html2PDF from 'jspdf-html2canvas';
+*/
+import {mapState} from "vuex" ;
+
+
 moment.locale('fr');
 var parseMessage = require('gmail-api-parse-message');
 export default {
@@ -106,114 +121,127 @@ export default {
     data() {
         return {
             moment,
-            message: {
-                id: '{MESSAGE_ID}',
-                threadId: '{THREAD_ID}',
-                labelIds: ['SENT', 'INBOX', 'UNREAD'],
-                snippet: 'This is one cool message, buddy.',
-                historyId: '701725',
-                internalDate: 1451995756000,
-                attachments: [{
-                    filename: 'example.jpg',
-                    mimeType: 'image/jpeg',
-                    size: 100446,
-                    attachmentId: '{ATTACHMENT_ID}',
-                    headers: {
-                        'content-type': 'image/jpeg; name="example.jpg"',
-                        'content-description': 'example.jpg',
-                        'content-transfer-encoding': 'base64',
-                        'content-id': '...'
-                    }
-                }],
-                inline: [{
-                    filename: 'example.png',
-                    mimeType: 'image/png',
-                    size: 5551,
-                    attachmentId: '{ATTACHMENT_ID}',
-                    headers: {
-                        'content-type': 'image/jpeg; name="example.png"',
-                        'content-description': 'example.png',
-                        'content-transfer-encoding': 'base64',
-                        'content-id': '...'
-                    }
-                }],
-                headers: {
-                    subject: 'Example subject',
-                    from: 'Example Name <example@gmail.com>',
-                    to: '<foo@gmail.com>, Foo Bar <fooBar@gmail.com>'
-                },
-                textPlain: 'This is one cool *message*, buddy.\r\n',
-                textHtml: '<div dir="ltr">This is one cool <b>message</b>, buddy.</div>\r\n'
-            }
+            /*
+              message: {
+                  id: '{MESSAGE_ID}',
+                  threadId: '{THREAD_ID}',
+                  labelIds: ['SENT', 'INBOX', 'UNREAD'],
+                  snippet: 'This is one cool message, buddy.',
+                  historyId: '701725',
+                  internalDate: 1451995756000,
+                  attachments: [{
+                      filename: 'example.jpg',
+                      mimeType: 'image/jpeg',
+                      size: 100446,
+                      attachmentId: '{ATTACHMENT_ID}',
+                      headers: {
+                          'content-type': 'image/jpeg; name="example.jpg"',
+                          'content-description': 'example.jpg',
+                          'content-transfer-encoding': 'base64',
+                          'content-id': '...'
+                      }
+                  }],
+                  inline: [{
+                      filename: 'example.png',
+                      mimeType: 'image/png',
+                      size: 5551,
+                      attachmentId: '{ATTACHMENT_ID}',
+                      headers: {
+                          'content-type': 'image/jpeg; name="example.png"',
+                          'content-description': 'example.png',
+                          'content-transfer-encoding': 'base64',
+                          'content-id': '...'
+                      }
+                  }],
+                  headers: {
+                      subject: 'Example subject',
+                      from: 'Example Name <example@gmail.com>',
+                      to: '<foo@gmail.com>, Foo Bar <fooBar@gmail.com>'
+                  },
+                  textPlain: 'This is one cool *message*, buddy.\r\n',
+                  textHtml: '<div dir="ltr">This is one cool <b>message</b>, buddy.</div>\r\n'
+              }
+              */
+            message: null,
+            messageId: this.$route.query.messageId || undefined,
         }
     },
-    props: ['messageId'],
+    computed: {
+        ...mapState(['messages'])
+    },
     components: {
         TopBar,
         Side,
         Footer
     },
-    mounted() {
+    created() {
         this.showMessage();
     },
     methods: {
-        printAsPdf(){
-            const message = document.querySelector('#message-container') ;
+        /**
+         * Pour imprimer le message au format pdf. Est instable pour le moment
+         */
+        printAsPdf() {
+            const message = document.querySelector('#message-container');
             const doc = new jsPDF();
 
-            doc.html(message,{
+            doc.html(message, {
                 callback: function (doc) {
                     doc.save("Message.pdf"); // will save the file in the current working directory
                 },
                 x: 10,
                 y: 10
-            }) ;
-
-            // This will implicitly create the canvas and PDF objects before saving.
-            html2pdf().from(message).save();
-            html2PDF(message, {
-                jsPDF: {
-                    format: 'a4',
-                },
-                imageType: 'image/jpeg',
-                output: './pdf/generate.pdf'
             });
 
+            // This will implicitly create the canvas and PDF objects before saving.
+            /*
+              html2pdf().from(message).save();
+              html2PDF(message, {
+                  jsPDF: {
+                      format: 'a4',
+                  },
+                  imageType: 'image/jpeg',
+                  output: './pdf/generate.pdf'
+              });
+              */
+
         },
-        getIconForAttachment(mime=''){
-            const mimeBase = mime.split('/')[0] ;
-            if (mime === 'application/pdf'){
-                return 'fa-file-pdf-o' ;
-            }
-            else if ( mime === 'application/msword' || mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ){
-                return 'fa-file-word-o' ;
+        /**
+         * Retourne la classe font Awesome apprropré en fonction du fichier.
+         * @param mime {string} Le mime type du fichier
+         */
+        getIconForAttachment(mime = '') {
+            const mimeBase = mime.split('/')[0];
+            if (mime === 'application/pdf') {
+                return 'fa-file-pdf-o';
+            } else if (mime === 'application/msword' || mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                return 'fa-file-word-o';
 
-            }
-            else if ( mime === 'application/vnd.ms-excel' || mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
-                return 'fa-file-excel-o' ;
+            } else if (mime === 'application/vnd.ms-excel' || mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+                return 'fa-file-excel-o';
 
-            }
-            else if ( mime === 'application/vnd.ms-powerpoint' || mime === 'application/vnd.openxmlformats-officedocument.presentationml.presentation'){
-                return 'fa-file-powerpoint-o' ;
-            }
-            else if ( mime === 'application/zip' ||  mime === 'application/tar' || mime === 'application/gzip' || mime === 'application/application/vnd.rar'){
-                return 'fa-file-archive-o' ;
-            }
+            } else if (mime === 'application/vnd.ms-powerpoint' || mime === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+                return 'fa-file-powerpoint-o';
+            } else if (mime === 'application/zip' || mime === 'application/tar' || mime === 'application/gzip' || mime === 'application/application/vnd.rar') {
+                return 'fa-file-archive-o';
+            } else if (mimeBase === 'image') {
+                return 'fa-file-image-o';
 
-            else if ( mimeBase=== 'image'){
-                return 'fa-file-image-o' ;
-
-            }
-            else if (mimeBase === 'audio')
-            {
-                return 'fa-file-audio-o' ;
-            } else if (mimeBase === 'video'){
+            } else if (mimeBase === 'audio') {
+                return 'fa-file-audio-o';
+            } else if (mimeBase === 'video') {
                 return 'fa-file-video-o'
-            }
-            else {
-                return 'fa-file-o' ;
+            } else {
+                return 'fa-file-o';
             }
         },
+        /**
+         * Convertir une chaine encodée en base 64 en type Blob js . Utile pour le téléchargement de pièces jointes
+         * @param b64Data {string} La chaine à convertir qui represente un fichier encodé
+         * @param contentType {string} Le type mime du fichier
+         * @param sliceSize {integer} La taille du fichier encodé
+         *
+         */
         base64ToBlob(b64Data, contentType, sliceSize) {
             contentType = contentType || ''
             sliceSize = sliceSize || 512
@@ -237,12 +265,14 @@ export default {
             const blob = new Blob(byteArrays, {type: contentType})
             return blob
         },
-        getAttachmentFile(event) {
+        /**
+         * Télécharge une pièce jointe
+         */
+        downloadAttachmentFile(event) {
             let current = event.currentTarget;
             let messageId = current.getAttribute('data-attachment-message-id');
             let attachmentId = current.getAttribute('data-attachment-id');
             // eslint-disable-next-line no-unused-vars
-
 
             // eslint-disable-next-line no-undef
             gapi.client.gmail.users.messages.attachments.get({
@@ -252,12 +282,12 @@ export default {
             }).then((response) => {
                 let result = response.result;
                 let attachmentMimeType = current.getAttribute('data-attachment-mime-type');
-                let attachmentSize= current.getAttribute('data-attachment-size');
+                let attachmentSize = current.getAttribute('data-attachment-size');
 
                 console.log(attachmentSize);
-                let dataBase64Rep = result.data.replace(/-/g, '+').replace(/_/g, '/') ;
-                console.log(result.size) ;
-               const blob = this.base64ToBlob(dataBase64Rep, attachmentMimeType, +result.size)
+                let dataBase64Rep = result.data.replace(/-/g, '+').replace(/_/g, '/');
+                console.log(result.size);
+                const blob = this.base64ToBlob(dataBase64Rep, attachmentMimeType, +result.size)
                 //const blob =new Blob([result.data], {type: attachmentMimeType});
                 //new Blob([result.data], {type: attachmentMimeType});
                 const link = document.createElement('a');
@@ -270,13 +300,64 @@ export default {
 
         },
         /**
-         *  Pour verifier s'il a de pieces jointe
-         @param {array} représente un tableau de pieces jointes
+         *  Vérifie s'il a de pieces jointes
+         * @param attachment {array} représente un tableau de pieces jointes
+         * @return boolean
          */
         hasAttachment(attachment) {
             return (typeof attachment !== 'undefined') ? Array.isArray(attachment) : false;
         },
+        /**
+         * Parcoure le tableau de message et obtient le prochain index du message à afficher.
+         * @param currentId {string} L'identifiant du message actuel
+         * @param messages {array} Un tableau de message
+         */
+        showAnotherMessage: function (currentId, messages) {
+            messages = messages || this.messages;
 
+            // On affiche automatiquement un autre mail
+            let index = _.findIndex(messages, function (o) {
+                console.log(o.id);
+                return o.id == currentId;
+            });
+            console.log(currentId);
+            console.log(index);
+
+            if (index !== -1) {
+                let newMessageId;
+                if (messages.length > 1) {
+                    if (messages.length > index) {
+                        console.log(messages[index + 1]);
+                        console.log(messages[index + 1].id);
+                        newMessageId = messages[index + 1].id
+                        this.messageId = newMessageId;
+                    } else if (messages.length === index) {
+                        newMessageId = this.messages[index - 1].id;
+                        console.log(messages[index - 1]);
+                        console.log(messages[index - 1].id);
+                        this.messageId = newMessageId;
+                    }
+                    // Remove index from messages
+                    messages.splice(index, 1);
+                    //On met à jour le data store
+                    this.$store.dispatch('setMessages', messages);
+                    // On recharge la page avec le nouveau message
+                    this.$router.replace({ name: 'Views', query: {messageId: this.messageId} } );
+                }
+                this.$router.push({name: 'Home'});
+
+                //On affiche le nouveau message
+                //this.showMessage();
+            } else {
+                console.log(this.messageId);
+                this.$router.push({name: 'Home'});
+                //this.$router.push({name: 'Home'});
+            }
+        },
+        /**
+         * supprime un message .
+         * Essaye d'abord d'envoyer le message dans la corbeille. Si le messsage est déja dans la corbeille fait appel à deleteMessagePermanently pour supprimer définitivement le message
+         */
         deleteMessage() {
             if (this.message.labelIds.some(element => element == 'TRASH')) {
                 this.deleteMessagePermanently();
@@ -288,9 +369,14 @@ export default {
                 id: this.message.id
             }).then((response) => {
                 console.log(response.result);
+                // On affiche automatiquement un autre mail
+                this.showAnotherMessage(this.message.id, this.messages);
 
             }).catch(err => console.log(err));
         },
+        /**
+         * Supprime définitivement un message
+         */
         deleteMessagePermanently() {
             // eslint-disable-next-line no-undef
             gapi.client.gmail.users.messages.delete({
@@ -298,11 +384,19 @@ export default {
                 id: this.message.id
             }).then((response) => {
                 console.log(response.result);
+                this.showAnotherMessage(this.message.id, this.messages);
 
             }).catch(err => console.log(err));
 
         },
+        /**
+         * Affiche un message et supprime automatiquement le label UNREAD du message. Autrement dit il marque en meme temps le mail comme lu
+         */
         showMessage() {
+            console.log(typeof this.messageId);
+            if (typeof this.messageId === "undefined") {
+                this.$router.push('Home');
+            }
             //let messageId = event.target.getAttribute('data-message-id');
             //let messageId = event.target.getAttribute('data-message-id');
             // eslint-disable-next-line no-undef
@@ -310,8 +404,7 @@ export default {
                 userId: 'me',
                 id: this.messageId
             }).then((response) => {
-                var parsedMessage = parseMessage(response.result);
-                console.log(parsedMessage);
+                const parsedMessage = parseMessage(response.result);
                 // eslint-disable-next-line no-undef
                 gapi.client.gmail.users.messages.modify({
                     userId: 'me',
@@ -319,11 +412,10 @@ export default {
                     removeLabelIds: [
                         "UNREAD"
                     ]
-                }).then(response => console.log(response)).catch(err => console.log(err));
+                }).then().catch(err => console.log(err));
                 //if parsedMessage.labelIds.some()
                 this.message = null;
                 this.message = new Object(parsedMessage);
-
             }).catch(err => console.log(err));
         }
 

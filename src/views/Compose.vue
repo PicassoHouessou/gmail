@@ -14,7 +14,7 @@
                             </div>
                             <div class="panel-heading hbuilt">
                                 <div class="p-xs">
-                                    <form method="get" class="form-horizontal" id="composeForm">
+                                    <form method="" class="form-horizontal" id="composeForm" @submit.prevent="false">
                                         <div class="form-group">
                                             <label class="col-sm-1 control-label text-left">A:</label>
                                             <div class="col-sm-11">
