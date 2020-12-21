@@ -25,7 +25,7 @@
                                 <div class="row">
                                     <div class="col-md-6 col-md-6 col-sm-6 col-xs-12 mg-b-15">
                                         <div class="btn-group">
-                                            <button class="btn btn-default btn-sm" @click.prevent="refreshPage"><i
+                                            <button class="btn btn-default btn-sm" @click.prevent="getMessageInLabel"><i
                                                 class="fa fa-refresh"></i>
                                                 Actualiser
                                             </button>
@@ -35,7 +35,9 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-md-6 col-sm-6 col-xs-12 mailbox-pagination mg-b-15">
-                                        <label style="margin-right: 10px; font-weight: 400;">{{ totalMessage  + 'sur' + this.$store.state.messages.length }}</label>
+                                        <label style="margin-right: 10px; font-weight: 400;">{{
+                                                this.$store.state.messages.length + ' sur ' + totalMessage
+                                            }}</label>
                                         <div class="btn-group">
                                             <button class="btn btn-default btn-sm"><i class="fa fa-arrow-left"></i>
                                             </button>
@@ -59,8 +61,8 @@
                                                     <label></label>
                                                 </div>
                                             </td>
-                                            <td><a href="view.php">{{ message.headers.from }}</a></td>
-                                            <td><a href="view.php">{{ truncate(message.snippet, 0, 70) }}</a>
+                                            <td><a href="" >{{ message.headers.from }}</a></td>
+                                            <td><a href="">{{ message.snippet | truncate(50)  }}</a>
                                             </td>
                                             <td><i class=""
                                                    :class=" hasAttachment(message.attachments) ? 'fa fa-paperclip' : '' "></i>
@@ -136,10 +138,12 @@ export default {
             total: '',
             searchBar: {
                 item: ''
-            }
+            },
+          pageToken: [],
         }
     },
     props: ['labelId'],
+
     computed: {
         ...mapState(['messages', 'totalMessage'])
     },
@@ -148,16 +152,10 @@ export default {
         Side,
         Footer
     }, mounted() {
+        this.getMessageInLabel();
 
-        // eslint-disable-next-line no-undef
-        if (typeof gapi.client === "undefined") {
+        //this.$store.dispatch('getAllMessageInLabel', this.labelId);
 
-            setTimeout(()=>{
-                this.$store.dispatch('getAllMessageInLabel', this.labelId);
-            }, 10000) ;
-        } else {
-            this.$store.dispatch('getAllMessageInLabel', this.labelId);
-        }
         //this.inbox();
         /*
         if (this.messages.length <2) {
@@ -166,15 +164,15 @@ export default {
         */
     },
     methods: {
-        hasPreviousPage(){
+        hasPreviousPage() {
 
 
         },
-        hasNextPage(){
+        hasNextPage() {
 
         },
-        getNextPageMessage(){
-          this.$store.dispatch('getAllMessageInLabel')   ;
+        getNextPageMessage() {
+            this.$store.dispatch('getAllMessageInLabel');
         },
         isUnread(tabs) {
             return tabs.some((element) => element === 'UNREAD');
@@ -190,7 +188,7 @@ export default {
             }
         },
         refreshPage() {
-            this.$store.dispatch('getAllMessageInLabel', this.labelId) ;
+            this.$store.dispatch('getAllMessageInLabel', this.labelId);
             //this.$router.go() ;
             //this.inbox() ;
             //this.$router.push({ name: 'Home'}) ;
@@ -203,32 +201,36 @@ export default {
             console.log(messageId);
             this.$router.push({name: 'Views', query: {messageId}});
         },
-        getMessageInLabelInbox() {
+        getMessageInLabel() {
             //let labelName = event.currentTarget.getAttribute('data-label-id');
-            // eslint-disable-next-line no-undef
-            gapi.client.gmail.users.messages.list({
-                'userId': 'me',
-                'labelIds': 'INBOX'
-            }).then((response) => {
-                    let responses = response.result.messages;
-                    let messages = [];
-                    for (var i = 0; i < responses.length; i++) {
-                        // eslint-disable-next-line no-undef
-                        gapi.client.gmail.users.messages.get({
-                            'userId': 'me',
-                            'id': (responses[i]).id
-                        }).then((response) => {
-                                let result = parseMessage(response.result);
-
-                                result.internalDate = moment().to(+result.internalDate);
-
-                                messages.push(result);
+            let labelName = this.$route.query.labelId ;
+            labelName = labelName || 'INBOX' ;
+            this.$gapi.getGapiClient().then((gapi) => {
+                this.$store.dispatch('setMessages' );
+                gapi.client.gmail.users.messages.list({
+                    'userId': 'me',
+                    'labelIds': labelName.toUpperCase()
+                }).then((response) => {
+                    this.$store.commit('SET_TOTAL_MESSAGE', response.result.resultSizeEstimate);
+                    //this.$store.commit('SET_NEXT_PAGE_TOKEN', response.result.nextPageToken);
+                        let responses = response.result.messages;
+                        if (typeof responses !== "undefined") {
+                            this.$store.dispatch('setMessages', []);
+                            for (var i = 0; i < responses.length; i++) {
+                                // eslint-disable-next-line no-undef
+                                gapi.client.gmail.users.messages.get({
+                                    'userId': 'me',
+                                    'id': (responses[i]).id
+                                }).then((response) => {
+                                        let result = parseMessage(response.result);
+                                        this.$store.dispatch('pushMessage', result);
+                                    }
+                                ).catch(err => console.log(err));
                             }
-                        ).catch(err => console.log(err));
+                        }
                     }
-                    this.$store.dispatch('setMessages', messages);
-                }
-            ).catch((err) => console.log(err));
+                ).catch((err) => console.log(err));
+            });
 
         },
         hasAttachment(attachment) {
@@ -266,7 +268,7 @@ export default {
 
                                     //messages.push(result);
 
-                                console.log(result) ;
+                                    console.log(result);
                                     //Tres important on met à jour le data store
                                     this.$store.dispatch('pushMessage', result);
 

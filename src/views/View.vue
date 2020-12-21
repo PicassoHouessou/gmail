@@ -6,7 +6,7 @@
                 <div class="row">
                     <Side></Side>
                     <div class="col-md-9 col-md-9 col-sm-9 col-xs-12">
-                        <div class="hpanel email-compose mailbox-view mg-b-15">
+                        <div class="hpanel email-compose mailbox-view mg-b-15" v-if=" message !== null ">
                             <div class="panel-heading hbuilt">
 
                                 <div class="p-xs h4">
@@ -37,7 +37,7 @@
 
                             <div class="panel-body panel-csm">
                                 <div id="message-container">
-                                    <span v-html="message.textHtml"></span>
+                                    <div v-html="message.textHtml"></div>
                                 </div>
                             </div>
 
@@ -105,12 +105,12 @@ import Side from "../components/Side" ;
 import Footer from "../components/Footer";
 // Load the full build.
 var _ = require('lodash');
-const {jsPDF} = require("jspdf"); // will automatically load the node version
-/*
+//const {jsPDF} = require("jspdf"); // will automatically load the node version
+
 const html2pdf = require("html2pdf.js") ;
 
 import html2PDF from 'jspdf-html2canvas';
-*/
+
 import {mapState} from "vuex" ;
 
 
@@ -121,47 +121,6 @@ export default {
     data() {
         return {
             moment,
-            /*
-              message: {
-                  id: '{MESSAGE_ID}',
-                  threadId: '{THREAD_ID}',
-                  labelIds: ['SENT', 'INBOX', 'UNREAD'],
-                  snippet: 'This is one cool message, buddy.',
-                  historyId: '701725',
-                  internalDate: 1451995756000,
-                  attachments: [{
-                      filename: 'example.jpg',
-                      mimeType: 'image/jpeg',
-                      size: 100446,
-                      attachmentId: '{ATTACHMENT_ID}',
-                      headers: {
-                          'content-type': 'image/jpeg; name="example.jpg"',
-                          'content-description': 'example.jpg',
-                          'content-transfer-encoding': 'base64',
-                          'content-id': '...'
-                      }
-                  }],
-                  inline: [{
-                      filename: 'example.png',
-                      mimeType: 'image/png',
-                      size: 5551,
-                      attachmentId: '{ATTACHMENT_ID}',
-                      headers: {
-                          'content-type': 'image/jpeg; name="example.png"',
-                          'content-description': 'example.png',
-                          'content-transfer-encoding': 'base64',
-                          'content-id': '...'
-                      }
-                  }],
-                  headers: {
-                      subject: 'Example subject',
-                      from: 'Example Name <example@gmail.com>',
-                      to: '<foo@gmail.com>, Foo Bar <fooBar@gmail.com>'
-                  },
-                  textPlain: 'This is one cool *message*, buddy.\r\n',
-                  textHtml: '<div dir="ltr">This is one cool <b>message</b>, buddy.</div>\r\n'
-              }
-              */
             message: null,
             messageId: this.$route.query.messageId || undefined,
         }
@@ -182,8 +141,9 @@ export default {
          * Pour imprimer le message au format pdf. Est instable pour le moment
          */
         printAsPdf() {
+
             const message = document.querySelector('#message-container');
-            const doc = new jsPDF();
+/*            const doc = new jsPDF();
 
             doc.html(message, {
                 callback: function (doc) {
@@ -192,9 +152,10 @@ export default {
                 x: 10,
                 y: 10
             });
+            */
 
             // This will implicitly create the canvas and PDF objects before saving.
-            /*
+
               html2pdf().from(message).save();
               html2PDF(message, {
                   jsPDF: {
@@ -203,7 +164,7 @@ export default {
                   imageType: 'image/jpeg',
                   output: './pdf/generate.pdf'
               });
-              */
+
 
         },
         /**
@@ -269,35 +230,36 @@ export default {
          * Télécharge une pièce jointe
          */
         downloadAttachmentFile(event) {
+            this.$Progress.start() ;
             let current = event.currentTarget;
             let messageId = current.getAttribute('data-attachment-message-id');
             let attachmentId = current.getAttribute('data-attachment-id');
-            // eslint-disable-next-line no-unused-vars
 
-            // eslint-disable-next-line no-undef
-            gapi.client.gmail.users.messages.attachments.get({
-                userId: 'me',
-                messageId: messageId,
-                id: attachmentId
-            }).then((response) => {
-                let result = response.result;
-                let attachmentMimeType = current.getAttribute('data-attachment-mime-type');
-                let attachmentSize = current.getAttribute('data-attachment-size');
+            this.$gapi.getGapiClient().then((gapi) => {
+                gapi.client.gmail.users.messages.attachments.get({
+                    userId: 'me',
+                    messageId: messageId,
+                    id: attachmentId
+                }).then((response) => {
+                    let result = response.result;
+                    let attachmentMimeType = current.getAttribute('data-attachment-mime-type');
+                    //let attachmentSize = current.getAttribute('data-attachment-size');
+                    let dataBase64Rep = result.data.replace(/-/g, '+').replace(/_/g, '/');
 
-                console.log(attachmentSize);
-                let dataBase64Rep = result.data.replace(/-/g, '+').replace(/_/g, '/');
-                console.log(result.size);
-                const blob = this.base64ToBlob(dataBase64Rep, attachmentMimeType, +result.size)
-                //const blob =new Blob([result.data], {type: attachmentMimeType});
-                //new Blob([result.data], {type: attachmentMimeType});
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = current.textContent;
-                link.click();
-                URL.revokeObjectURL(link.href);
-                console.log(result);
-            }).catch(err => console.log(err));
-
+                    const blob = this.base64ToBlob(dataBase64Rep, attachmentMimeType, +result.size)
+                    //const blob =new Blob([result.data], {type: attachmentMimeType});
+                    //new Blob([result.data], {type: attachmentMimeType});
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = current.textContent;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    this.$Progress.finish() ;
+                }).catch((err) => {
+                    this.$Progress.finish() ;
+                    this.flash("error", err.message) ;
+                });
+            });
         },
         /**
          *  Vérifie s'il a de pieces jointes
@@ -327,14 +289,10 @@ export default {
                 let newMessageId;
                 if (messages.length > 1) {
                     if (messages.length > index) {
-                        console.log(messages[index + 1]);
-                        console.log(messages[index + 1].id);
                         newMessageId = messages[index + 1].id
                         this.messageId = newMessageId;
                     } else if (messages.length === index) {
                         newMessageId = this.messages[index - 1].id;
-                        console.log(messages[index - 1]);
-                        console.log(messages[index - 1].id);
                         this.messageId = newMessageId;
                     }
                     // Remove index from messages
@@ -342,7 +300,7 @@ export default {
                     //On met à jour le data store
                     this.$store.dispatch('setMessages', messages);
                     // On recharge la page avec le nouveau message
-                    this.$router.replace({ name: 'Views', query: {messageId: this.messageId} } );
+                    this.$router.replace({name: 'Views', query: {messageId: this.messageId}});
                 }
                 this.$router.push({name: 'Home'});
 
@@ -358,65 +316,81 @@ export default {
          * supprime un message .
          * Essaye d'abord d'envoyer le message dans la corbeille. Si le messsage est déja dans la corbeille fait appel à deleteMessagePermanently pour supprimer définitivement le message
          */
+        flash(type = "success", message = "L'email a été envoyé", title = "Information",) {
+            this.$notify({
+                group: "app",
+                title: title,
+                type: type,
+                text: message,
+                position: "top center",
+                width: "50%"
+            });
+        },
         deleteMessage() {
             if (this.message.labelIds.some(element => element == 'TRASH')) {
                 this.deleteMessagePermanently();
                 return;
             }
-            // eslint-disable-next-line no-undef
-            gapi.client.gmail.users.messages.trash({
-                userId: 'me',
-                id: this.message.id
-            }).then((response) => {
-                console.log(response.result);
-                // On affiche automatiquement un autre mail
-                this.showAnotherMessage(this.message.id, this.messages);
+            this.$gapi.getGapiClient().then((gapi) => {
+                gapi.client.gmail.users.messages.trash({
+                    userId: 'me',
+                    id: this.message.id
+                }).then((response) => {
+                    console.log(response.result);
+                    // On affiche automatiquement un autre mail
+                    this.showAnotherMessage(this.message.id, this.messages);
 
-            }).catch(err => console.log(err));
+                }).catch((err) => {
+                    this.flash("error", "Erreur : ", err.message);
+                });
+            });
         },
         /**
          * Supprime définitivement un message
          */
         deleteMessagePermanently() {
             // eslint-disable-next-line no-undef
-            gapi.client.gmail.users.messages.delete({
-                userId: 'me',
-                id: this.message.id
-            }).then((response) => {
-                console.log(response.result);
-                this.showAnotherMessage(this.message.id, this.messages);
+            this.$gapi.getGapiClient().then((gapi) => {
+                gapi.client.gmail.users.messages.delete({
+                    userId: 'me',
+                    id: this.message.id
+                }).then((response) => {
+                    console.log(response.result);
+                    this.showAnotherMessage(this.message.id, this.messages);
 
-            }).catch(err => console.log(err));
+                }).catch((err) => {
+                    this.flash("error", "Erreur : ", err.message);
+                });
 
+            });
         },
         /**
          * Affiche un message et supprime automatiquement le label UNREAD du message. Autrement dit il marque en meme temps le mail comme lu
          */
         showMessage() {
-            console.log(typeof this.messageId);
             if (typeof this.messageId === "undefined") {
+                console.log(this.messageId);
                 this.$router.push('Home');
             }
             //let messageId = event.target.getAttribute('data-message-id');
-            //let messageId = event.target.getAttribute('data-message-id');
-            // eslint-disable-next-line no-undef
-            gapi.client.gmail.users.messages.get({
-                userId: 'me',
-                id: this.messageId
-            }).then((response) => {
-                const parsedMessage = parseMessage(response.result);
-                // eslint-disable-next-line no-undef
-                gapi.client.gmail.users.messages.modify({
+            this.$gapi.getGapiClient().then((gapi) => {
+                gapi.client.gmail.users.messages.get({
                     userId: 'me',
-                    id: parsedMessage.id,
-                    removeLabelIds: [
-                        "UNREAD"
-                    ]
-                }).then().catch(err => console.log(err));
-                //if parsedMessage.labelIds.some()
-                this.message = null;
-                this.message = new Object(parsedMessage);
-            }).catch(err => console.log(err));
+                    id: this.messageId
+                }).then((response) => {
+                    const parsedMessage = parseMessage(response.result);
+                    gapi.client.gmail.users.messages.modify({
+                        userId: 'me',
+                        id: parsedMessage.id,
+                        removeLabelIds: [
+                            "UNREAD"
+                        ]
+                    }).then().catch(err => console.log(err));
+                    //if parsedMessage.labelIds.some()
+                    this.message = null;
+                    this.message = new Object(parsedMessage);
+                }).catch(err => console.log(err));
+            });
         }
 
     }
