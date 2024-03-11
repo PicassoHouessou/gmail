@@ -9,7 +9,7 @@ To get started with GWebmail, follow these simple steps:
 1. Clone the repository to your local machine:
 
    ```
-   git clone <repository-url>
+   git clone https://github.com/PicassoHouessou/gmail.git
    ```
 
 2. Navigate to the project directory:
