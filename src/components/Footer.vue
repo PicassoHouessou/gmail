@@ -4,7 +4,7 @@
       <div class="row">
         <div class="col-lg-12">
           <div class="footer-copy-right">
-            <p>Copyright © 2021 <a href="https://wimtec.me">Wimtec</a> Tous les droits réservés.</p>
+            <p>Copyright © 2021 <a href="https://picassohouessou.com" target="_blank">Picasso Houessou</a> Tous les droits réservés.</p>
           </div>
         </div>
       </div>

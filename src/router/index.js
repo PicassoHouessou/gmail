@@ -26,7 +26,7 @@ const routes = [
         }
     },
     {
-        path: '/views/:messageId',
+        path: '/views/:messageId?',
         name: 'Views',
         component: View,
         props: true,
