@@ -1,10 +1,8 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import moment from "moment";
-
 //import gapi from './../api'
-//import moment from "moment";
-var _ = require('lodash');
+//var _ = require('lodash');
+var array = require('lodash/array');
 var parseMessage = require('gmail-api-parse-message');
 Vue.use(Vuex)
 export default new Vuex.Store({
@@ -17,11 +15,12 @@ export default new Vuex.Store({
         },
         totalMessage: null,
         messages: [],
-        labels: []
+        labels: [],
+        pageTokens: [],
     },
     mutations: {
-        SET_NEXT_PAGE_TOKEN(state, pageToken){
-            state.nextPageToken  = pageToken ;
+        SET_NEXT_PAGE_TOKEN(state, pageToken) {
+            state.nextPageToken = pageToken;
         },
         SET_TOTAL_MESSAGE(state, totalValue) {
             state.totalMessage = totalValue;
@@ -29,49 +28,72 @@ export default new Vuex.Store({
         UPDATE_TOTAL(state, payload) {
             state.total = payload;
         },
+        REMOVE_MESSAGE(state, index) {
+            let messages = state.messages;
+            messages.splice(index, 1);
+            // console.log(messages) ;
+            state.messages = messages;
+
+        },
         SET_MESSAGES(state, payload) {
             state.messages = payload;
         },
         PUSH_MESSAGE(state, payload) {
-            state.messages.push(payload);
+            const messages = state.messages
+            messages.push(payload);
+           // state.messages = [...new Set(messages)]
+            state.messages = array.uniqBy(messages, 'id') ;
+
+            //state.messages.push(payload);
         },
         /**
          * Met à jet le tableau de message
          *
          */
         UPDATE_MESSAGE(state, {payload, index}) {
-            state.messages[index] = payload;
+
+            const messages = state.messages;
+            messages[index] = (payload);
+            //state.messages = [...new Set(messages)]
+            state.messages = array.uniqBy(messages, 'id') ;
+
+            // state.messages[index] = payload;
         },
         GET_ALL_LABELS(state, payload) {
             state.labels = payload;
         },
         PUSH_LABEL(state, payload) {
-            state.labels.push(payload);
+            const labels = state.labels
+            labels.push(payload);
+            //state.labels = [...new Set(labels)];
+            state.labels = array.uniqBy(labels, 'id') ;
+            //state.labels.push(payload);
+
         },
-        SET_LABELS(state,payload){
+        SET_LABELS(state, payload) {
             state.labels = payload
         },
         UPDATE_LABEL(state, {payload, index}) {
-            console.log(payload);
-            console.log(index);
-            state.labels[index] = payload;
+            const labels = state.labels
+            labels[index] = payload;
+            //state.labels = [...new Set(labels)];
+            state.labels = array.uniqBy(labels, 'id') ;
+            //state.labels[index] = payload;
         }
     },
     actions:
         {
-            setLabels(context, payload){
-                if( typeof payload === "undefined") {
-                    payload = [] ;
+            setLabels(context, payload) {
+                if (typeof payload === "undefined") {
+                    payload = [];
                 }
-                context.commit('SET_LABELS', payload) ;
+                context.commit('SET_LABELS', payload);
             },
             updateMessage(context, payload) {
-
-                let index = _.findIndex(this.messages, function (o) {
+                let index = array.findIndex(this.messages, function (o) {
                     return o.id == payload.id;
                 });
-                if (index !== -1) {
-                    console.log(payload);
+                if (index === -1) {
                     context.commit('PUSH_MESSAGE', payload);
                 } else {
                     context.commit('UPDATE_MESSAGE', {payload, index});
@@ -79,18 +101,23 @@ export default new Vuex.Store({
             }
             ,
             updateLabel(context, payload) {
-                let index = _.findIndex(this.labels, function (o) {
+                console.log(payload);
+                let index = array.findIndex(this.labels, function (o) {
                     return o.id == payload.id;
                 });
-                if (index !== -1) {
-                    console.log(payload);
+                //Si l'élément n'existe pas
+                if (index === -1) {
                     context.commit('PUSH_LABEL', payload);
                 } else {
-                    context.commit('UPDATE_LABEL', payload);
+                    context.commit('UPDATE_LABEL', {payload, index});
                 }
             },
-            pushLabel(context, payload){
+            pushLabel(context, payload) {
                 context.commit('PUSH_LABEL', payload);
+            }
+            ,
+            removeMessage(context, index) {
+                context.commit('REMOVE_MESSAGE', index);
             }
             ,
             pushMessage(context, message) {
@@ -104,8 +131,8 @@ export default new Vuex.Store({
             }
             ,
             setMessages(context, messages) {
-                if( typeof messages === "undefined") {
-                    messages = [] ;
+                if (typeof messages === "undefined") {
+                    messages = [];
                 }
                 context.commit('SET_MESSAGES', messages);
             },
@@ -120,8 +147,6 @@ export default new Vuex.Store({
             }
             ,
             getAllLabels(context) {
-
-
                 this.$gapi.getGapiClient().then((gapi) => {
                     gapi.client.gmail.users.labels.list({
                         'userId': 'me'
@@ -135,7 +160,6 @@ export default new Vuex.Store({
                                 'id': (responses[i]).id
                             }).then((response) => {
                                     let result = response.result;
-                                    result.internalDate = moment().to(+result.internalDate);
                                     //context.commit('UPDATE_LABEL', result);
                                     context.commit('PUSH_LABEL', result);
 

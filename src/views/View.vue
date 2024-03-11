@@ -4,14 +4,14 @@
         <div class="mailbox-area mg-tb-15">
             <div class="container-fluid">
                 <div class="row">
-                    <Side></Side>
+                    <SideBar></SideBar>
                     <div class="col-md-9 col-md-9 col-sm-9 col-xs-12">
                         <div class="hpanel email-compose mailbox-view mg-b-15" v-if=" message !== null ">
                             <div class="panel-heading hbuilt">
 
                                 <div class="p-xs h4">
                                     <small class="pull-right">
-                                        <small><i> {{ moment().to(+message.internalDate) }}</i></small>
+                                        <small><i> {{ message.internalDate | dateTo }}</i></small>
                                     </small> <b>{{ message.headers.subject }}</b>
 
                                 </div>
@@ -30,7 +30,7 @@
                                     </div>
                                     <div>
                                         <span class="font-extra-bold">Date: </span>
-                                        <small>{{ moment(new Date(+message.internalDate)).format('LLL') }}</small>
+                                        <small>{{ message.internalDate | dateFormat('LLL') }}</small>
                                     </div>
                                 </div>
                             </div>
@@ -99,38 +99,64 @@
 </template>
 
 <script>
-import moment from "moment" ;
+//import moment from "moment" ;
 import TopBar from "../components/TopBar";
-import Side from "../components/Side" ;
+import SideBar from "../components/SideBar" ;
 import Footer from "../components/Footer";
 // Load the full build.
-var _ = require('lodash');
+var array = require('lodash/array');
 //const {jsPDF} = require("jspdf"); // will automatically load the node version
-
-const html2pdf = require("html2pdf.js") ;
+/*
+const html2pdf = require("html2pdf.js");
 
 import html2PDF from 'jspdf-html2canvas';
-
+*/
 import {mapState} from "vuex" ;
 
 
-moment.locale('fr');
+//moment.locale('fr');
 var parseMessage = require('gmail-api-parse-message');
 export default {
     name: 'Home',
     data() {
         return {
-            moment,
             message: null,
             messageId: this.$route.query.messageId || undefined,
         }
+    },
+
+    filters: {
+        // eslint-disable-next-line no-unused-vars
+        dateFormat: function (date, format = 'LL') {
+            if (!date) return '';
+            //return moment(new Date(+date)).format(format);
+            return new Date(+date).toLocaleDateString('fr-fr',
+                {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }) ;
+        },
+        dateTo(dateField) {
+            if (!dateField) return '';
+            return new Date(+dateField).toLocaleDateString('fr-fr',
+                {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }) ;
+            //return dayjs().to(dayjs(+dateField)) ;
+            //return moment().to(+dateField);
+
+        }
+
     },
     computed: {
         ...mapState(['messages'])
     },
     components: {
         TopBar,
-        Side,
+        SideBar,
         Footer
     },
     created() {
@@ -141,31 +167,32 @@ export default {
          * Pour imprimer le message au format pdf. Est instable pour le moment
          */
         printAsPdf() {
+            return false ;
+            //const message = document.querySelector('#message-container');
 
-            const message = document.querySelector('#message-container');
-/*            const doc = new jsPDF();
+            /*            const doc = new jsPDF();
 
-            doc.html(message, {
-                callback: function (doc) {
-                    doc.save("Message.pdf"); // will save the file in the current working directory
-                },
-                x: 10,
-                y: 10
-            });
-            */
+                        doc.html(message, {
+                            callback: function (doc) {
+                                doc.save("Message.pdf"); // will save the file in the current working directory
+                            },
+                            x: 10,
+                            y: 10
+                        });
+                        */
 
             // This will implicitly create the canvas and PDF objects before saving.
+/*
+            html2pdf().from(message).save();
+            html2PDF(message, {
+                jsPDF: {
+                    format: 'a4',
+                },
+                imageType: 'image/jpeg',
+                output: './pdf/generate.pdf'
+            });
 
-              html2pdf().from(message).save();
-              html2PDF(message, {
-                  jsPDF: {
-                      format: 'a4',
-                  },
-                  imageType: 'image/jpeg',
-                  output: './pdf/generate.pdf'
-              });
-
-
+*/
         },
         /**
          * Retourne la classe font Awesome apprropré en fonction du fichier.
@@ -229,8 +256,9 @@ export default {
         /**
          * Télécharge une pièce jointe
          */
+        // eslint-disable-next-line no-unused-vars
         downloadAttachmentFile(event) {
-            this.$Progress.start() ;
+            this.$Progress.start();
             let current = event.currentTarget;
             let messageId = current.getAttribute('data-attachment-message-id');
             let attachmentId = current.getAttribute('data-attachment-id');
@@ -254,12 +282,13 @@ export default {
                     link.download = current.textContent;
                     link.click();
                     URL.revokeObjectURL(link.href);
-                    this.$Progress.finish() ;
+                    this.$Progress.finish();
                 }).catch((err) => {
-                    this.$Progress.finish() ;
-                    this.flash("error", err.message) ;
+                    this.$Progress.finish();
+                    this.flash("error", err.message);
                 });
             });
+
         },
         /**
          *  Vérifie s'il a de pieces jointes
@@ -278,31 +307,33 @@ export default {
             messages = messages || this.messages;
 
             // On affiche automatiquement un autre mail
-            let index = _.findIndex(messages, function (o) {
-                console.log(o.id);
+            let index = array.findIndex(messages, function (o) {
                 return o.id == currentId;
             });
-            console.log(currentId);
-            console.log(index);
 
             if (index !== -1) {
-                let newMessageId;
+                let newMessageId = null;
                 if (messages.length > 1) {
                     if (messages.length > index) {
                         newMessageId = messages[index + 1].id
+                        console.log(newMessageId) ;
                         this.messageId = newMessageId;
                     } else if (messages.length === index) {
                         newMessageId = this.messages[index - 1].id;
                         this.messageId = newMessageId;
+                        console.log(newMessageId) ;
                     }
                     // Remove index from messages
-                    messages.splice(index, 1);
+                    //messages.splice(index, 1);
                     //On met à jour le data store
-                    this.$store.dispatch('setMessages', messages);
+                    //this.$store.dispatch('setMessages', messages);
+                    this.$store.dispatch('removeMessage', index);
+
                     // On recharge la page avec le nouveau message
                     this.$router.replace({name: 'Views', query: {messageId: this.messageId}});
+                } else {
+                    this.$router.push({name: 'Home'});
                 }
-                this.$router.push({name: 'Home'});
 
                 //On affiche le nouveau message
                 //this.showMessage();
@@ -322,6 +353,7 @@ export default {
                 title: title,
                 type: type,
                 text: message,
+                duration: 10000,
                 position: "top center",
                 width: "50%"
             });
@@ -335,8 +367,7 @@ export default {
                 gapi.client.gmail.users.messages.trash({
                     userId: 'me',
                     id: this.message.id
-                }).then((response) => {
-                    console.log(response.result);
+                }).then(() => {
                     // On affiche automatiquement un autre mail
                     this.showAnotherMessage(this.message.id, this.messages);
 

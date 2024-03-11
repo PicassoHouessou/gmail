@@ -14,7 +14,7 @@
 @import "./assets/css/bootstrap.min.css";
 @import "./assets/css/font-awesome.min.css";
 
-@import "./assets/css/main.css";
+//@import "./assets/css/main.css";
 @import "./assets/css/style.css";
 @import "./assets/css/responsive.css";
 
@@ -46,10 +46,10 @@ nav a.router-link-exact-active {
 */
 </style>
 <script>
-import moment from "moment" ;
+//import moment from "moment" ;
 import Offline from "@/components/Offline";
 
-moment.locale('fr');
+//moment.locale('fr');
 export default {
     name: 'App',
     data() {
@@ -57,7 +57,12 @@ export default {
             messages: [],
         }
     },
-    mounted() {
+  beforeMount() {
+    //Intercepte toutes les erreurs
+    this.onError() ;
+  },
+  mounted() {
+        this.onError() ;
         /*
       this.$modal.show(
           Offline,
@@ -67,6 +72,8 @@ export default {
       ) */
         // Surveille le mode hors ligne
         //this.onOffline();
+
+
         //this.handleClientLoad();
 
         //  [App.vue specific] When App.vue is finish loading finish the progress bar
@@ -96,7 +103,7 @@ export default {
             //  finish the progress bar
             this.$Progress.finish()
         })
-
+        this.onError();
         this.login();
         try {
             // NOTE: Google recommends 45 min refresh policy
@@ -143,7 +150,7 @@ export default {
                 alert("Error occurred: " + e.error.message);
                 return false;
             })
-        },
+        }
 
     }
 }
