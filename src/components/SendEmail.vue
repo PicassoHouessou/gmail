@@ -39,7 +39,7 @@
                                 <div class="col-sm-11">
                                     <ValidationProvider rules="required" v-slot="{ errors }">
                                         <input type="text" class="form-control input-sm" name="subject"
-                                               
+
                                                v-model="form.subject" :class="{'input-error': errors[0] }">
                                         <span class="validation-error">{{ errors[0] }}</span>
                                     </ValidationProvider>
@@ -99,7 +99,8 @@
 .validation-error {
     color: #dc3545;
 }
-.ck-editor__editable_inline  {
+
+.ck-editor__editable_inline {
     min-height: 400px !important;
 }
 </style>
@@ -193,14 +194,7 @@ export default {
 
         sendMail(label = '') {
             console.log(label);
-            // eslint-disable-next-line no-unused-vars
             const message =
-                "From: " + this.user.emailAddress + "\r\n" +
-                "To: " + this.form.to + "\r\n" +
-                "Cc: " + this.form.cc + "\r\n" +
-                "Subject: " + this.form.subject + "\r\n\r\n";
-
-            const message2 =
                 "From: " + this.user.emailAddress + "\n" +
                 "To: " + this.form.to + "\n" +
                 "Cc: " + this.form.cc + "\n" +
@@ -208,9 +202,8 @@ export default {
                 "Subject: " + this.form.subject + "\n\n\n" +
                 this.editorData;
             //"This is the plain text body of the message.  Note the blank line between the header information and the body of the message.";
-
-// The body needs to be base64url encoded.
-            const encodedMessage = btoa(message2)
+            // The body needs to be base64url encoded.
+            const encodedMessage = btoa(message)
 
             const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
@@ -227,9 +220,7 @@ export default {
                             },
                             raw: reallyEncodedMessage
                         }
-
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
+                    }).then(() => {
                         this.$router.push({name: "Home"});
                         this.flash("success", "L'email a été enregistré");
 
@@ -247,7 +238,7 @@ export default {
                         },
                         raw: reallyEncodedMessage
                         // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
+                    }).then(() => {
                         this.$router.push({name: "Home"});
                         this.flash("success", "L'email a été envoyé");
                     })
@@ -258,75 +249,186 @@ export default {
             }
 
         },
-        sendMailWithAttachmentSimple(label = '') {
+        sendMailWithAttachments(label = '') {
+            const files = this.$refs.file.files;
+            const attachments = [];
+
+            const processFile = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const fileData = event.target.result;
+                        const encodedFileData = btoa(fileData);
+                        const attachmentPart =
+                            "--foo_bar_baz" + "\n" +
+                            "Content-Type: " + file.type + "; name=\"" + file.name + "\"\n" +
+                            "Content-Transfer-Encoding: base64" + "\n" +
+                            "Content-Disposition: attachment; filename=\"" + file.name + "\"\n\n" +
+                            encodedFileData + "\n\n";
+
+                        attachments.push(attachmentPart);
+                        reader.removeEventListener('load', onLoad);
+                        reader.removeEventListener('error', onError);
+                        resolve();
+                    };
+
+                    const onLoad = () => {
+                        reader.onload = null;
+                        reader.onerror = null;
+                    };
+
+                    const onError = (error) => {
+                        reject(error);
+                    };
+
+                    reader.addEventListener('load', onLoad);
+                    reader.addEventListener('error', onError);
+                    reader.readAsBinaryString(file);
+                });
+            };
+
+            // Promisify file processing
+            const filePromises = Array.from(files).map(processFile);
+
+            Promise.all(filePromises)
+                .then(() => {
+                    // Construct email message
+                    const htmlContent =
+                        "Content-Type: text/html" + "\n\n" +
+                        "<html><body>" +
+                        this.editorData + // Your HTML content here
+                        "</body></html>";
+
+                    const message =
+                        "Content-Type: multipart/related; boundary=foo_bar_baz" + "\n" +
+                        "MIME-Version: 1.0" + "\n" +
+                        "From: " + this.user.emailAddress + "\n" +
+                        "To: " + this.form.to + "\n" +
+                        "Subject: " + this.form.subject + "\n\n" +
+                        "--foo_bar_baz" + "\n" +
+                        htmlContent + "\n\n" +
+                        attachments.join('') +
+                        "--foo_bar_baz--";
+
+                    const encodedMessage = btoa(message);
+                    const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                    if (label === "DRAFT") {
+                        this.$gapi.getGapiClient().then((gapi) => {
+                            gapi.client.gmail.users.drafts.create({
+                                userId: 'me',
+                                message: {
+                                    labelIds: [
+                                        label
+                                    ],
+                                    raw: reallyEncodedMessage
+                                }
+                            }).then((response) => {
+                                console.log(response);
+                                /*
+                            this.$router.push({name: "Home"}); */
+                                this.flash("success", "L'email a été enregistré");
+
+                            }).catch((err) => {
+                                console.log(err);
+                                this.flash("error", err.message);
+                            })
+                        });
+                    } else {
+                        this.$gapi.getGapiClient().then((gapi) => {
+                            gapi.client.gmail.users.messages.send({
+                                userId: 'me',
+                                /*
+                                labelIds: [
+                                    label
+                                ],
+                                payload: {
+                                    mimeType: 'text/html',
+                                },
+                                */
+                                raw: reallyEncodedMessage
+                                // eslint-disable-next-line no-unused-vars
+                            }).then((response) => {
+                                console.log(response)
+                                /*
+                            this.$router.push({name: "Home"});*/
+                                this.flash("success", "L'email a été envoyé");
+                            })
+                                .catch(err => {
+                                    console.log(err);
+                                    this.flash("error", err.message, "L'email n'a pas été envoyé");
+                                });
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error processing files:", error);
+                });
+        },
+        sendMailWithAttachmentSimple2(label = '') {
             const file = this.$refs.file.files[0];
-            const editorDataEncoded = btoa(this.editorData)
 
-            const reallyEncodedEditorData = editorDataEncoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-            // eslint-disable-next-line no-unused-vars
-            const size = file.size + reallyEncodedEditorData.length
-            const message2 =
-                "Content-Type:  multipart/related ;  boundary=foo_bar_baz" + "\n" +
-                "MIME-Version: 1.0" + "\n"+
-                "From: " + this.user.emailAddress + "\n" +
-                "To: " + this.form.to + "\n" +
-                //"Cc: " + this.form.cc + "\n" +
-                "Subject: " + this.form.subject + "\n\n" +
-                //"Content-Length:  " + size + "\n\n" +
-                "--foo_bar_baz" + "\n" +
-                "Content-Type: text/html" + "\n\n" +
+            const reader = new FileReader();
 
-                this.editorData + "\n\n" +
+            reader.onload = (event) => {
+                const fileData = event.target.result;
+                const encodedFileData = btoa(fileData);
 
-                "--foo_bar_baz" + "\n" +
-                "Content-Type: " + file.type + ";name=\"" + file.name + "\"\n" +
-                'Content-Transfer-Encoding: base64' + "\n" +
-                "Content-Disposition: attachment; filename=\"" + file.name + "\"\n\n" +
+                const editorDataEncoded = btoa(this.editorData)
+                /* const encodedFileData = btoa(file).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');*/
+                const reallyEncodedEditorData = editorDataEncoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                // eslint-disable-next-line no-unused-vars
+                const size = encodedFileData + length + reallyEncodedEditorData.length
+                const message2 =
+                    "Content-Type:  multipart/related ;  boundary=foo_bar_baz" + "\n" +
+                    "MIME-Version: 1.0" + "\n" +
+                    "From: " + this.user.emailAddress + "\n" +
+                    "To: " + this.form.to + "\n" +
+                    //"Cc: " + this.form.cc + "\n" +
+                    "Subject: " + this.form.subject + "\n\n" +
+                    "Content-Length:  " + size + "\n\n" +
+                    "--foo_bar_baz" + "\n" +
+                    "Content-Type: text/html" + "\n\n" +
+                    this.editorData + "\n\n" +
 
-                //btoa(file) + "\n"+
-                btoa(file).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') + "\n\n" +
-                "--foo_bar_baz--";
+                    "--foo_bar_baz" + "\n" +
+                    "Content-Type: " + file.type + ";name=\"" + file.name + "\"\n" +
+                    'Content-Transfer-Encoding: base64' + "\n" +
+                    "Content-Disposition: attachment; filename=\"" + file.name + "\"\n\n" +
+                    encodedFileData + "\n\n" +
+                    "--foo_bar_baz--";
 
-            console.log(message2);
-// The body needs to be base64url encoded.
-            const encodedMessage = btoa(message2) ;
+                // The body needs to be base64url encoded.
+                const encodedMessage = btoa(message2);
+                //const reallyEncodedMessage = encodedMessage ;
+                const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-            //const reallyEncodedMessage = encodedMessage ;
-            const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-
-            if (label === "DRAFT") {
-                this.$gapi.getGapiClient().then((gapi) => {
-                    gapi.client.gmail.users.drafts.create({
-                        userId: 'me',
-                        message: {
-
-                            labelIds: [
-                                label
-                            ],/*,
-                            payload: {
-                                mimeType: 'text/html',
-                            },
-                            */
-                            raw: reallyEncodedMessage
-                        }
-
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
-                        console.log(response);
-                        /*
+                if (label === "DRAFT") {
+                    this.$gapi.getGapiClient().then((gapi) => {
+                        gapi.client.gmail.users.drafts.create({
+                            userId: 'me',
+                            message: {
+                                labelIds: [
+                                    label
+                                ],
+                                raw: reallyEncodedMessage
+                            }
+                        }).then((response) => {
+                            console.log(response);
+                            /*
                         this.$router.push({name: "Home"}); */
-                        this.flash("success", "L'email a été enregistré");
+                            this.flash("success", "L'email a été enregistré");
 
-                    }).catch((err) => {
-                        console.log(err);
-                        this.flash("error", err.message);
-                    })
-                });
-            } else {
-                this.$gapi.getGapiClient().then((gapi) => {
-                    gapi.client.gmail.users.messages.send({
-                        userId: 'me',
-                        /*
+                        }).catch((err) => {
+                            console.log(err);
+                            this.flash("error", err.message);
+                        })
+                    });
+                } else {
+                    this.$gapi.getGapiClient().then((gapi) => {
+                        gapi.client.gmail.users.messages.send({
+                            userId: 'me',
+                            /*
                             labelIds: [
                                 label
                             ],
@@ -334,88 +436,22 @@ export default {
                                 mimeType: 'text/html',
                             },
                             */
-                        raw: reallyEncodedMessage
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
-                        console.log(response)
-                        /*
-                        this.$router.push({name: "Home"});*/
-                        this.flash("success", "L'email a été envoyé");
-                    })
-                        .catch(err => {
-                            console.log(err);
-                            this.flash("error", err.message, "L'email n'a pas été envoyé");
-                        });
-                });
-            }
-
-        },
-        sendMailWithAttachment(label = '') {
-            console.log(label);
-            // eslint-disable-next-line no-unused-vars
-            const message =
-                "From: " + this.user.emailAddress + "\r\n" +
-                "To: " + this.form.to + "\r\n" +
-                "Cc: " + this.form.cc + "\r\n" +
-                "Subject: " + this.form.subject + "\r\n\r\n";
-
-            const message2 =
-                "From: " + this.user.emailAddress + "\n" +
-                "To: " + this.form.to + "\n" +
-                "Cc: " + this.form.cc + "\n" +
-                "Content-Type: application/json; charset=UTF-8" + "\n" +
-                "X-Upload-Content-Type: message/rfc822" + "\n" +
-                "Subject: " + this.form.subject + "\n\n\n" +
-                this.editorData;
-
-// The body needs to be base64url encoded.
-            const encodedMessage = btoa(message2)
-
-            const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-
-            if (label === "DRAFT") {
-                this.$gapi.getGapiClient().then((gapi) => {
-                    gapi.client.gmail.users.drafts.create({
-                        userId: 'me',
-                        message: {
-                            labelIds: [
-                                label
-                            ],
-                            payload: {
-                                mimeType: 'text/html',
-                            },
                             raw: reallyEncodedMessage
-                        }
-
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
-                        this.$router.push({name: "Home"});
-                        this.flash("success", "L'email a été enregistré");
-
-                    })
-                });
-            } else {
-                this.$gapi.getGapiClient().then((gapi) => {
-                    gapi.client.gmail.users.messages.send({
-                        uploadType: "resumable",
-                        userId: 'me',
-                        labelIds: [
-                            label
-                        ],
-                        payload: {
-                            mimeType: 'text/html',
-                        },
-                        raw: reallyEncodedMessage
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
-                        this.$router.push({name: "Home"});
-                        this.flash("success", "L'email a été envoyé");
-                    })
-                        .catch(err => {
-                            this.flash("error", err.message, "L'email n'a pas été envoyé");
-                        });
-                });
+                            // eslint-disable-next-line no-unused-vars
+                        }).then((response) => {
+                            console.log(response)
+                            /*
+                        this.$router.push({name: "Home"});*/
+                            this.flash("success", "L'email a été envoyé");
+                        })
+                            .catch(err => {
+                                console.log(err);
+                                this.flash("error", err.message, "L'email n'a pas été envoyé");
+                            });
+                    });
+                }
             }
+            reader.readAsBinaryString(file);
 
         },
         submit() {
@@ -423,8 +459,8 @@ export default {
             if (!file) {
                 this.sendMail();
             } else {
-                console.log (file);
-                this.sendMailWithAttachmentSimple();
+                console.log(file);
+                this.sendMailWithAttachments();
             }
 
         }
