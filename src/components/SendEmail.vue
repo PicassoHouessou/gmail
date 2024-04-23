@@ -192,7 +192,6 @@ export default {
 
         },
         sendEmail(label = '') {
-            console.log(label);
             const message =
                 "From: " + this.user.emailAddress + "\n" +
                 "To: " + this.form.to + "\n" +
@@ -321,14 +320,11 @@ export default {
                                     ],
                                     raw: reallyEncodedMessage
                                 }
-                            }).then((response) => {
-                                console.log(response);
-                                /*
-                            this.$router.push({name: "Home"}); */
+                            }).then(() => {
                                 this.flash("success", "L'email a été enregistré");
+                                this.$router.push({name: "Home"});
 
                             }).catch((err) => {
-                                console.log(err);
                                 this.flash("error", err.message);
                             })
                         });
@@ -336,31 +332,21 @@ export default {
                         this.$gapi.getGapiClient().then((gapi) => {
                             gapi.client.gmail.users.messages.send({
                                 userId: 'me',
-                                /*
-                                labelIds: [
-                                    label
-                                ],
-                                payload: {
-                                    mimeType: 'text/html',
-                                },
-                                */
                                 raw: reallyEncodedMessage
-                                // eslint-disable-next-line no-unused-vars
-                            }).then((response) => {
-                                console.log(response)
-                                /*
-                            this.$router.push({name: "Home"});*/
+
+                            }).then(() => {
                                 this.flash("success", "L'email a été envoyé");
+                                this.$router.push({name: "Home"});
                             })
                                 .catch(err => {
-                                    console.log(err);
                                     this.flash("error", err.message, "L'email n'a pas été envoyé");
                                 });
                         });
                     }
                 })
                 .catch((error) => {
-                    console.error("Error processing files:", error);
+
+                    this.flash("error", error.message, "Erreur de traitement des fichiers");
                 });
         },
         submit() {
@@ -368,7 +354,6 @@ export default {
             if (!file) {
                 this.sendEmail();
             } else {
-                console.log(file);
                 this.sendEmailWithAttachments();
             }
 
