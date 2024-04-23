@@ -9275,6 +9275,13 @@ vue-hot-reload-api@^2.3.0:
   resolved "https://registry.yarnpkg.com/vue-hot-reload-api/-/vue-hot-reload-api-2.3.4.tgz#532955cc1eb208a3d990b3a9f9a70574657e08f2"
   integrity sha512-BXq3jwIagosjgNVae6tkHzzIk6a8MHFtzAdwhnV5VlvPTFxDCvIttgSiHWjdGoTJvXtmRu5HacExfdarRcFhog==
 
+vue-html2pdf@^1.8.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/vue-html2pdf/-/vue-html2pdf-1.8.0.tgz#c69a2c285ac4de88245435cd36d64075e1a1f23e"
+  integrity sha512-8/eH6rZUcMERgvq9a1JZjn680sD/RVLf398PikscxYMKNzqrLVjEmk/CHO7mXAyxE7Z/MCnLdmjE3fAJrEs2Xg==
+  dependencies:
+    html2pdf.js "^0.9.2"
+
 vue-js-modal@^2.0.0-rc.6:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/vue-js-modal/-/vue-js-modal-2.0.1.tgz#748ba2533c5b5eaf8234c6320b148663357c1163"

@@ -11,11 +11,11 @@
                     <hr>
                     <li v-for="label in labels" :key="label.id" :data-label-id="label.id"
                     >
-<!--                        <span class="pull-right">{{ label.messagesTotal }}</span>-->
                         <span class="pull-right">{{ label.messagesUnread }}</span>
-                        <router-link :to="{name: 'Home', query :{labelId: label.id.toLowerCase() } } " :data-label-id="label.id"><i class="fa "  :class=" getLabelIcon(label.id) "></i>
-<!--                          :class="  (typeof label.id !== 'undefined' ) ? getLabelIcon(label.id) : '' "-->
-                            {{ label.name  | capitalize }}
+                        <router-link :to="{name: 'Home', query :{labelId: label.id.toLowerCase() } } "
+                                     :data-label-id="label.id"><i class="fa " :class=" getLabelIcon(label.id) "></i>
+                            <!--                          :class="  (typeof label.id !== 'undefined' ) ? getLabelIcon(label.id) : '' "-->
+                            {{ formatLabel(label.name) }}
                         </router-link>
                     </li>
                 </ul>
@@ -36,8 +36,8 @@
 <style>
 
 li a.router-link-exact-active {
-  color: #444444;
-  background-color: #f7f9fa;
+    color: #444444;
+    background-color: #f7f9fa;
 }
 </style>
 <script>
@@ -59,7 +59,7 @@ export default {
             //labels: []
         }
     },
-    callBackFunction : null ,
+    callBackFunction: null,
     computed: {
         ...mapState(['total', 'labels'])
     },
@@ -99,10 +99,11 @@ export default {
                 return false;
             })
         },
-        capitalize(s) {
+        formatLabel(s) {
             if (typeof s !== 'string') return ''
-            s = s.toLowerCase();
-            return s.charAt(0).toUpperCase() + s.slice(1)
+            return s.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+
         },
         getLabelIcon(name = '') {
 
@@ -116,9 +117,8 @@ export default {
                 return 'fa-pencil';
             } else if (name == 'SPAM') {
                 return 'fa-envelope';
-            }
-            else if (name == 'TRASH') {
-              return 'fa-trash';
+            } else if (name == 'TRASH') {
+                return 'fa-trash';
             } else {
                 return 'fa-play';
             }
@@ -150,7 +150,7 @@ export default {
         },
         getMessageInLabels(event) {
             let labelName = event.currentTarget.getAttribute('data-label-id');
-            labelName = labelName.toUpperCase() ;
+            labelName = labelName.toUpperCase();
             this.$router.push({name: 'Home', params: {labelId: labelName}});
             this.$store.dispatch('getAllMessageInLabel', labelName);
             /*
@@ -195,7 +195,7 @@ export default {
             let labelName = null;
             if (typeof event === "object") {
                 labelName = event.currentTarget.getAttribute('data-label-id');
-                labelName = labelName.toUpperCase() ;
+                labelName = labelName.toUpperCase();
 
             } else {
                 labelName = 'INBOX';
@@ -216,7 +216,7 @@ export default {
                         var responses = response.result.messages;
                         //let messages = [];
                         if (typeof responses !== "undefined") {
-                            this.$store.dispatch('setMessages' );
+                            this.$store.dispatch('setMessages');
                             for (let i = 0; i < responses.length; i++) {
                                 // eslint-disable-next-line no-undef
                                 gapi.client.gmail.users.messages.get({
@@ -273,8 +273,8 @@ export default {
             });
 
             this.$options.callBackFunction = setTimeout(() => {
-                this.getAllLabels() ;
-            }, 1000 * 60 );
+                this.getAllLabels();
+            }, 1000 * 60);
             //this.getAllLabels() ;
         }
         ,
@@ -300,24 +300,7 @@ export default {
             });
 
 
-            /*
-                        gapi.client.gmail.users.messages.list({
-                            'userId': 'me'
-                        }).then((response) => {
-
-                            localTotal.inbox = response.result.resultSizeEstimate;
-                        }) ;
-
-                        gapi.client.gmail.users.messages.list({
-                            'userId': 'me'
-                        }).then((response) => {
-
-                            localTotal.inbox = response.result.resultSizeEstimate;
-                        }) ;
-            */
-
             this.$store.dispatch('updateTotal', localTotal);
-            //context.commit('UPDATE_TOTAL', localTotal);
 
 
         }

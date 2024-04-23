@@ -25,11 +25,13 @@
                                 <div class="row">
                                     <div class="col-md-6 col-md-6 col-sm-6 col-xs-12 mg-b-15">
                                         <div class="btn-group">
-                                            <button class="btn btn-default btn-sm" @click.prevent="getMessageInLabel"><i
+                                            <button class="btn btn-default btn-sm"
+                                                    @click.prevent="()=>getMessagesInLabels()"><i
                                                 class="fa fa-refresh"></i>
                                                 Actualiser
                                             </button>
-                                            <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i>
+                                            <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"
+                                                                                      @click="deleteMessages"></i>
                                             </button>
                                             <button class="btn btn-default btn-sm"><i class="fa fa-star-o"></i></button>
                                         </div>
@@ -54,22 +56,28 @@
                                         <tbody>
                                         <tr class="" v-for="message in messages"
                                             :class=" isUnread(message.labelIds) ? 'unread' : '' "
-                                            v-bind:key="message.id" :data-message-id="message.id"
-                                            @click.prevent="showMessage"
+                                            v-bind:key="message.id"
                                             style="cursor: pointer">
                                             <td class="">
                                                 <div class="checkbox checkbox-single checkbox-success">
-                                                    <input type="checkbox" checked>
+                                                    <input style="margin-left: 5px" type="checkbox"
+                                                           :data-message-id="message.id"
+                                                           @input="(event)=>onSelectChange(event,message.id)">
                                                     <label></label>
                                                 </div>
+
                                             </td>
-                                            <td><a href="">{{ message.headers.from }}</a></td>
-                                            <td><a href="">{{ message.snippet | truncate(50) }}</a>
+                                            <td @click.prevent="(event)=>showMessage(event,message.id)"><a
+                                                href="">{{ message.headers.from }}</a>
                                             </td>
-                                            <td><i class=""
-                                                   :class=" hasAttachment(message.attachments) ? 'fa fa-paperclip' : '' "></i>
+                                            <td @click.prevent="(event)=>showMessage(event,message.id)"><a
+                                                href="">{{ message.snippet | truncate(50) }}</a>
                                             </td>
-                                            <td class="text-right mail-date">
+                                            <td @click.prevent="(event)=>showMessage(event,message.id)"><i class=""
+                                                                                                           :class=" hasAttachment(message.attachments) ? 'fa fa-paperclip' : '' "></i>
+                                            </td>
+                                            <td @click.prevent="showMessage" :data-message-id="message.id"
+                                                class="text-right mail-date">
                                                 {{ message.internalDate | dateFormat('LL') }}
                                             </td>
 
@@ -106,7 +114,7 @@ export default {
     name: 'Home',
     data() {
         return {
-            //messages:[],
+            messagesId: [],
             total: '',
             searchBar: {
                 item: ''
@@ -136,19 +144,59 @@ export default {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                }) ;
+                });
 
         }
 
     },
     beforeMount() {
-        this.getMessageInLabel();
+        this.getMessagesInLabels();
     },
     methods: {
         hasPreviousPage() {
         },
         hasNextPage() {
 
+        },
+        deleteMessages(type) {
+            const messages = this.messagesId;
+            if (messages.length == 0) {
+                return;
+            }
+            messages.forEach(async (message) => {
+                const gapi = await this.$gapi.getGapiClient();
+                if (type == 'TRASH') {
+                    await gapi.client.gmail.users.messages.delete({
+                        userId: 'me',
+                        id: message
+                    });
+                } else {
+                    await gapi.client.gmail.users.messages.trash({
+                        userId: 'me',
+                        id: message
+                    });
+                }
+            });
+            this.messagesId = [];
+            this.getMessagesInLabels();
+        },
+        onSelectChange(event, messageId) {
+            const messages = this.messagesId;
+
+            if (event.currentTarget.checked) {
+                const exist = messages?.find((element) => element === messageId);
+                if (!exist) {
+                    messages.push(messageId);
+                }
+
+            } else {
+                const index = messages?.findIndex((element) => element == messageId);
+                if (index != -1) {
+                    messages.splice(index, 1);
+
+                }
+            }
+            this.messagesId = messages;
         },
         showPreviousPage() {
 
@@ -158,22 +206,22 @@ export default {
             if (index !== -1) {
                 if (index - 1 >= 0) {
                     const tokenToShow = this.pageTokens[index - 1];
-                    this.getMessageInLabel("", tokenToShow);
+                    this.getMessagesInLabels("", tokenToShow);
                 }
             }
         },
         showNextPage() {
-            let currentPageToken = this.currentPageToken ;
-            let pageTokens = this.pageTokens ;
+            let currentPageToken = this.currentPageToken;
+            let pageTokens = this.pageTokens;
             let index = array.findIndex(pageTokens, function (o) {
                 return o === currentPageToken;
             });
 
             if (index === -1) {
-                this.getMessageInLabel();
+                this.getMessagesInLabels();
             } else {
                 const tokenToShow = this.pageTokens[index + 1];
-                this.getMessageInLabel("", tokenToShow);
+                this.getMessagesInLabels("", tokenToShow);
             }
         },
         getNextPageMessage() {
@@ -198,14 +246,11 @@ export default {
             //this.inbox() ;
             //this.$router.push({ name: 'Home'}) ;
         },
-        showMessage(event) {
-
+        showMessage(event, id) {
             let messageId = event.currentTarget.getAttribute('data-message-id');
-
-            console.log(messageId);
-            this.$router.push({name: 'Views', query: {messageId}});
+            this.$router.push({name: 'Views', params: {messageId: id || messageId}});
         },
-        getMessageInLabel(maxResults = "100", nextPageToken = "") {
+        getMessagesInLabels(maxResults = "100", nextPageToken = "") {
             //let labelName = event.currentTarget.getAttribute('data-label-id');
             let labelName = this.$route.query.labelId;
             labelName = labelName || 'INBOX';

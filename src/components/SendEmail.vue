@@ -16,7 +16,7 @@
                                 <div class="col-sm-11">
                                     <ValidationProvider v-slot="{ errors }">
                                         <input type="text" name="to" class="form-control input-sm"
-                                               placeholder="example@email.com" v-model="form.to"
+                                               v-model="form.to"
                                                :class="{'input-error': errors[0] }">
                                         <span class="validation-error">{{ errors[0] }}</span>
                                     </ValidationProvider>
@@ -35,11 +35,11 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="col-sm-1 control-label text-left">Suject:</label>
+                                <label class="col-sm-1 control-label text-left">Objet:</label>
                                 <div class="col-sm-11">
                                     <ValidationProvider rules="required" v-slot="{ errors }">
                                         <input type="text" class="form-control input-sm" name="subject"
-                                               placeholder="Entrez le sujet de votre message"
+                                               
                                                v-model="form.subject" :class="{'input-error': errors[0] }">
                                         <span class="validation-error">{{ errors[0] }}</span>
                                     </ValidationProvider>
@@ -98,7 +98,11 @@
 
 .validation-error {
     color: #dc3545;
-}</style>
+}
+.ck-editor__editable_inline  {
+    min-height: 400px !important;
+}
+</style>
 <script>
 import {ValidationObserver, ValidationProvider, extend} from "vee-validate";
 import CKEditor from '@ckeditor/ckeditor5-vue2';
@@ -132,7 +136,7 @@ export default {
 
             user: null,
             editor: ClassicEditor,
-            editorData: '<p>Content of the editor.</p>',
+            editorData: '',
             editorConfig: {
                 toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'Indent', 'Outdent', 'blockQuote', 'MediaEmbed', 'undo', 'redo'],
                 heading: {

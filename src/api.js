@@ -1,6 +1,5 @@
 // src/utils/gmaps.js
 
-
 // Your personal API key.
 // Get it here: https://console.cloud.google.com/google/maps-apis
 const API_KEY = 'AIzaSyCWAaBJsI1234TI18PITVy7p0Qb6ht123';
