@@ -41,8 +41,8 @@ export default new Vuex.Store({
         PUSH_MESSAGE(state, payload) {
             const messages = state.messages
             messages.push(payload);
-           // state.messages = [...new Set(messages)]
-            state.messages = array.uniqBy(messages, 'id') ;
+            // state.messages = [...new Set(messages)]
+            state.messages = array.uniqBy(messages, 'id');
 
             //state.messages.push(payload);
         },
@@ -55,7 +55,7 @@ export default new Vuex.Store({
             const messages = state.messages;
             messages[index] = (payload);
             //state.messages = [...new Set(messages)]
-            state.messages = array.uniqBy(messages, 'id') ;
+            state.messages = array.uniqBy(messages, 'id');
 
             // state.messages[index] = payload;
         },
@@ -66,7 +66,7 @@ export default new Vuex.Store({
             const labels = state.labels
             labels.push(payload);
             //state.labels = [...new Set(labels)];
-            state.labels = array.uniqBy(labels, 'id') ;
+            state.labels = array.uniqBy(labels, 'id');
             //state.labels.push(payload);
 
         },
@@ -77,7 +77,7 @@ export default new Vuex.Store({
             const labels = state.labels
             labels[index] = payload;
             //state.labels = [...new Set(labels)];
-            state.labels = array.uniqBy(labels, 'id') ;
+            state.labels = array.uniqBy(labels, 'id');
             //state.labels[index] = payload;
         }
     },
@@ -101,7 +101,6 @@ export default new Vuex.Store({
             }
             ,
             updateLabel(context, payload) {
-                console.log(payload);
                 let index = array.findIndex(this.labels, function (o) {
                     return o.id == payload.id;
                 });

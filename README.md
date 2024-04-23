@@ -1,6 +1,8 @@
 # GWebmail: Gmail Integrated Webmail Application
 
-Welcome to GWebmail! GWebmail is a simple and memorable web application that integrates seamlessly with Gmail, allowing you to manage your emails efficiently. This README will guide you through setting up and using the application effectively.
+Welcome to GWebmail! GWebmail is a simple and memorable web application that integrates seamlessly with Gmail, allowing
+you to manage your emails efficiently. This README will guide you through setting up and using the application
+effectively.
 
 ## Installation
 
@@ -34,7 +36,8 @@ Before you can start using GWebmail, you need to configure the Gmail API credent
 4. Create OAuth 2.0 credentials for the application.
 5. Set the authorized redirect URIs. For development, you can use `http://localhost:8080` as the redirect URI.
 6. Download the JSON file containing your client ID and client secret.
-7. Rename the JSON file to `client_secret.json` and place it in the `src` directory of the GWebmail application.
+7. Edit the `.env` file in the root directory of the GWebmail application and add your client ID and client secret in
+   the following format.
 
 ## Usage
 
@@ -54,7 +57,7 @@ After configuring the Gmail API credentials, you can start using GWebmail.
 
 ## Demo
 
-Check out the live demo of GWebmail: [Demo](https://demo.com)
+Check out the live demo of GWebmail: [Demo](https://gmail.picassohouessou.com)
 
 ## Features
 
@@ -72,16 +75,12 @@ Check out the live demo of GWebmail: [Demo](https://demo.com)
 
 ## Contributing
 
-Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request on GitHub.
+Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a
+pull request on GitHub.
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-## Acknowledgments
-
-- Thank you to the Vue.js community for providing excellent documentation and support.
-- Special thanks to the Google Developers team for maintaining the Gmail API.
 
 ## Contact
 

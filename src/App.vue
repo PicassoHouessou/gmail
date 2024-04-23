@@ -3,7 +3,6 @@
         <div id="nav">
         </div>
         <router-view :key="$route.fullPath"/>
-        <!-- set progressbar -->
         <vue-progress-bar></vue-progress-bar>
         <notifications group="app"/>
     </div>
@@ -13,7 +12,6 @@
 /*@import "https://fonts.googleapis.com/css?family=Roboto:100,300,400,700,900"; */
 @import "./assets/css/bootstrap.min.css";
 @import "./assets/css/font-awesome.min.css";
-
 //@import "./assets/css/main.css";
 @import "./assets/css/style.css";
 @import "./assets/css/responsive.css";
@@ -22,34 +20,11 @@ nav a.router-link-exact-active {
     color: #42b983;
 }
 
-/*
-#app {
-    font-family: Avenir, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-align: center;
-    color: #2c3e50;
-}
 
-#nav {
-    padding: 30px;
-}
-
-#nav a {
-    font-weight: bold;
-    color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-    color: #42b983;
-}
-*/
 </style>
 <script>
-//import moment from "moment" ;
-import Offline from "@/components/Offline";
+import LoginModal from "@/components/LoginModal";
 
-//moment.locale('fr');
 export default {
     name: 'App',
     data() {
@@ -57,29 +32,15 @@ export default {
             messages: [],
         }
     },
-  beforeMount() {
-    //Intercepte toutes les erreurs
-    this.onError() ;
-  },
-  mounted() {
-        this.onError() ;
-        /*
-      this.$modal.show(
-          Offline,
-          { text: 'Vous etes hors connexion' },
-          { clickToClose: false }
-
-      ) */
+    beforeMount() {
+        //Intercepte toutes les erreurs
+        this.onError();
+    },
+    mounted() {
+        this.onError();
         // Surveille le mode hors ligne
         //this.onOffline();
-
-
-        //this.handleClientLoad();
-
-        //  [App.vue specific] When App.vue is finish loading finish the progress bar
         this.$Progress.finish()
-
-        // this.updateSigninStatus();
     },
     created() {
         //  [App.vue specific] When App.vue is first loaded start the progress bar
@@ -98,12 +59,12 @@ export default {
             next()
         })
         //  hook the progress bar to finish after we've finished moving router-view
-        // eslint-disable-next-line no-unused-vars
-        this.$router.afterEach((to, from) => {
+        this.$router.afterEach(() => {
             //  finish the progress bar
             this.$Progress.finish()
         })
         this.onError();
+        //this.logout();
         this.login();
         try {
             // NOTE: Google recommends 45 min refresh policy
@@ -118,31 +79,32 @@ export default {
     methods: {
         login() {
             if (!this.$gapi.isAuthenticated()) {
-                this.$gapi
-                    .login()
-                    .then(() => {
-                        // eslint-disable-next-line no-console
-                        console.log("Successfully authenticated");
-                        //this.authenticated = true;
-                        //this.userData = this.$gapi.getUserData();
-                    })
-                    .catch(err => {
-                        // eslint-disable-next-line no-console
-                        console.error("Login call failed: %s", err.message);
-                    });
+                this.$modal.show(
+                    LoginModal,
+                    {text: 'Vous devez vous connecter'},
+                    {clickToClose: false}
+                )
             }
         },
 
+
         onOffline() {
-            // addEventListener version
             // eslint-disable-next-line no-unused-vars
             window.addEventListener('offline', (event) => {
+                this.$notify({
+                    group: "app",
+                    title: 'Vous etes hors connexion',
+                    type: "warn",
+                    text: 'Vous etes hors connexion',
+                    position: "top center",
+                    width: "50%"
+                });
+                /*
                 this.$modal.show(
                     Offline,
                     {text: 'Vous etes hors connexion'},
                     {clickToClose: false}
-                )
-                console.log("You are offline to the network.");
+                )*/
             });
         },
         onError() {

@@ -16,7 +16,7 @@
                                 <div class="col-sm-11">
                                     <ValidationProvider v-slot="{ errors }">
                                         <input type="text" name="to" class="form-control input-sm"
-                                               placeholder="example@email.com" v-model="form.to"
+                                               v-model="form.to"
                                                :class="{'input-error': errors[0] }">
                                         <span class="validation-error">{{ errors[0] }}</span>
                                     </ValidationProvider>
@@ -35,11 +35,11 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="col-sm-1 control-label text-left">Suject:</label>
+                                <label class="col-sm-1 control-label text-left">Objet:</label>
                                 <div class="col-sm-11">
                                     <ValidationProvider rules="required" v-slot="{ errors }">
                                         <input type="text" class="form-control input-sm" name="subject"
-                                               placeholder="Entrez le sujet de votre message"
+
                                                v-model="form.subject" :class="{'input-error': errors[0] }">
                                         <span class="validation-error">{{ errors[0] }}</span>
                                     </ValidationProvider>
@@ -73,11 +73,16 @@
                     <button class="btn btn-primary ft-compse" type="submit">Envoyer</button>
                     <!--            <button class="btn btn-primary ft-compse" @click.prevent="submit" type="submit">Envoyer</button>-->
                     <div class="btn-group">
-
                         <input type="file" ref="file" id="attachmentFile" @change="handleAttachment"
                                multiple="multiple">
-                        <label class="btn btn-default" for="attachmentFile"><i class="fa fa-paperclip"></i></label>
+                        <label class="btn btn-default" for="attachmentFile"><i class="fa fa-paperclip"></i>
+                        </label>
+
                         <!--                <button class="btn btn-default" @click.prevent="addFile"><i class="fa fa-paperclip"></i></button>-->
+                    </div>
+                    <div style="margin: auto;" v-if="selectedFiles.length > 0">{{
+                            selectedFiles.length > 1 ? +" fichiers ajoutés" : " fichier ajouté"
+                        }}
                     </div>
 
                 </div>
@@ -98,7 +103,12 @@
 
 .validation-error {
     color: #dc3545;
-}</style>
+}
+
+.ck-editor__editable_inline {
+    min-height: 400px !important;
+}
+</style>
 <script>
 import {ValidationObserver, ValidationProvider, extend} from "vee-validate";
 import CKEditor from '@ckeditor/ckeditor5-vue2';
@@ -127,12 +137,17 @@ export default {
     mounted() {
         this.getUserInfo();
     },
+    computed: {
+        selectedFileNames() {
+            return this.selectedFiles.map(file => file.name).join(', ');
+        }
+    },
     data() {
         return {
-
+            selectedFiles: [],
             user: null,
             editor: ClassicEditor,
-            editorData: '<p>Content of the editor.</p>',
+            editorData: '',
             editorConfig: {
                 toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'Indent', 'Outdent', 'blockQuote', 'MediaEmbed', 'undo', 'redo'],
                 heading: {
@@ -159,8 +174,17 @@ export default {
             });
         }
         ,
-        handleAttachment() {
+        handleAttachment(event) {
+            // Reset selectedFiles array
+            this.selectedFiles = [];
 
+            // Get selected files
+            const files = event.target.files;
+
+            // Iterate over selected files and add them to selectedFiles array
+            for (let i = 0; i < files.length; i++) {
+                this.selectedFiles.push(files[i]);
+            }
         },
         addFile() {
             document.querySelector('#attachmentFile').click();
@@ -177,7 +201,7 @@ export default {
             })
         },
         save() {
-            this.sendMail('DRAFT');
+            this.sendEmail('DRAFT');
 
         }
         ,
@@ -186,17 +210,8 @@ export default {
             this.$router.push({name: 'Home'});
 
         },
-
-        sendMail(label = '') {
-            console.log(label);
-            // eslint-disable-next-line no-unused-vars
+        sendEmail(label = '') {
             const message =
-                "From: " + this.user.emailAddress + "\r\n" +
-                "To: " + this.form.to + "\r\n" +
-                "Cc: " + this.form.cc + "\r\n" +
-                "Subject: " + this.form.subject + "\r\n\r\n";
-
-            const message2 =
                 "From: " + this.user.emailAddress + "\n" +
                 "To: " + this.form.to + "\n" +
                 "Cc: " + this.form.cc + "\n" +
@@ -204,9 +219,8 @@ export default {
                 "Subject: " + this.form.subject + "\n\n\n" +
                 this.editorData;
             //"This is the plain text body of the message.  Note the blank line between the header information and the body of the message.";
-
-// The body needs to be base64url encoded.
-            const encodedMessage = btoa(message2)
+            // The body needs to be base64url encoded.
+            const encodedMessage = btoa(message)
 
             const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
@@ -223,9 +237,7 @@ export default {
                             },
                             raw: reallyEncodedMessage
                         }
-
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
+                    }).then(() => {
                         this.$router.push({name: "Home"});
                         this.flash("success", "L'email a été enregistré");
 
@@ -242,8 +254,7 @@ export default {
                             mimeType: 'text/html',
                         },
                         raw: reallyEncodedMessage
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
+                    }).then(() => {
                         this.$router.push({name: "Home"});
                         this.flash("success", "L'email a été envoyé");
                     })
@@ -254,173 +265,115 @@ export default {
             }
 
         },
-        sendMailWithAttachmentSimple(label = '') {
-            const file = this.$refs.file.files[0];
-            const editorDataEncoded = btoa(this.editorData)
+        sendEmailWithAttachments(label = '') {
+            const files = this.$refs.file.files;
+            const attachments = [];
 
-            const reallyEncodedEditorData = editorDataEncoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-            // eslint-disable-next-line no-unused-vars
-            const size = file.size + reallyEncodedEditorData.length
-            const message2 =
-                "Content-Type:  multipart/related ;  boundary=foo_bar_baz" + "\n" +
-                "MIME-Version: 1.0" + "\n"+
-                "From: " + this.user.emailAddress + "\n" +
-                "To: " + this.form.to + "\n" +
-                //"Cc: " + this.form.cc + "\n" +
-                "Subject: " + this.form.subject + "\n\n" +
-                //"Content-Length:  " + size + "\n\n" +
-                "--foo_bar_baz" + "\n" +
-                "Content-Type: text/html" + "\n\n" +
+            const processFile = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const fileData = event.target.result;
+                        const encodedFileData = btoa(fileData);
+                        const attachmentPart =
+                            "--foo_bar_baz" + "\n" +
+                            "Content-Type: " + file.type + "; name=\"" + file.name + "\"\n" +
+                            "Content-Transfer-Encoding: base64" + "\n" +
+                            "Content-Disposition: attachment; filename=\"" + file.name + "\"\n\n" +
+                            encodedFileData + "\n\n";
 
-                this.editorData + "\n\n" +
+                        attachments.push(attachmentPart);
+                        reader.removeEventListener('load', onLoad);
+                        reader.removeEventListener('error', onError);
+                        resolve();
+                    };
 
-                "--foo_bar_baz" + "\n" +
-                "Content-Type: " + file.type + ";name=\"" + file.name + "\"\n" +
-                'Content-Transfer-Encoding: base64' + "\n" +
-                "Content-Disposition: attachment; filename=\"" + file.name + "\"\n\n" +
+                    const onLoad = () => {
+                        reader.onload = null;
+                        reader.onerror = null;
+                    };
 
-                //btoa(file) + "\n"+
-                btoa(file).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') + "\n\n" +
-                "--foo_bar_baz--";
+                    const onError = (error) => {
+                        reject(error);
+                    };
 
-            console.log(message2);
-// The body needs to be base64url encoded.
-            const encodedMessage = btoa(message2) ;
-
-            //const reallyEncodedMessage = encodedMessage ;
-            const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-
-            if (label === "DRAFT") {
-                this.$gapi.getGapiClient().then((gapi) => {
-                    gapi.client.gmail.users.drafts.create({
-                        userId: 'me',
-                        message: {
-
-                            labelIds: [
-                                label
-                            ],/*,
-                            payload: {
-                                mimeType: 'text/html',
-                            },
-                            */
-                            raw: reallyEncodedMessage
-                        }
-
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
-                        console.log(response);
-                        /*
-                        this.$router.push({name: "Home"}); */
-                        this.flash("success", "L'email a été enregistré");
-
-                    }).catch((err) => {
-                        console.log(err);
-                        this.flash("error", err.message);
-                    })
+                    reader.addEventListener('load', onLoad);
+                    reader.addEventListener('error', onError);
+                    reader.readAsBinaryString(file);
                 });
-            } else {
-                this.$gapi.getGapiClient().then((gapi) => {
-                    gapi.client.gmail.users.messages.send({
-                        userId: 'me',
-                        /*
-                            labelIds: [
-                                label
-                            ],
-                            payload: {
-                                mimeType: 'text/html',
-                            },
-                            */
-                        raw: reallyEncodedMessage
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
-                        console.log(response)
-                        /*
-                        this.$router.push({name: "Home"});*/
-                        this.flash("success", "L'email a été envoyé");
-                    })
-                        .catch(err => {
-                            console.log(err);
-                            this.flash("error", err.message, "L'email n'a pas été envoyé");
+            };
+
+            // Promisify file processing
+            const filePromises = Array.from(files).map(processFile);
+
+            Promise.all(filePromises)
+                .then(() => {
+                    // Construct email message
+                    const htmlContent =
+                        "Content-Type: text/html" + "\n\n" +
+                        "<html><body>" +
+                        this.editorData + // Your HTML content here
+                        "</body></html>";
+
+                    const message =
+                        "Content-Type: multipart/related; boundary=foo_bar_baz" + "\n" +
+                        "MIME-Version: 1.0" + "\n" +
+                        "From: " + this.user.emailAddress + "\n" +
+                        "To: " + this.form.to + "\n" +
+                        "Subject: " + this.form.subject + "\n\n" +
+                        "--foo_bar_baz" + "\n" +
+                        htmlContent + "\n\n" +
+                        attachments.join('') +
+                        "--foo_bar_baz--";
+
+                    const encodedMessage = btoa(message);
+                    const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                    if (label === "DRAFT") {
+                        this.$gapi.getGapiClient().then((gapi) => {
+                            gapi.client.gmail.users.drafts.create({
+                                userId: 'me',
+                                message: {
+                                    labelIds: [
+                                        label
+                                    ],
+                                    raw: reallyEncodedMessage
+                                }
+                            }).then(() => {
+                                this.flash("success", "L'email a été enregistré");
+                                this.$router.push({name: "Home"});
+
+                            }).catch((err) => {
+                                this.flash("error", err.message);
+                            })
                         });
-                });
-            }
+                    } else {
+                        this.$gapi.getGapiClient().then((gapi) => {
+                            gapi.client.gmail.users.messages.send({
+                                userId: 'me',
+                                raw: reallyEncodedMessage
 
-        },
-        sendMailWithAttachment(label = '') {
-            console.log(label);
-            // eslint-disable-next-line no-unused-vars
-            const message =
-                "From: " + this.user.emailAddress + "\r\n" +
-                "To: " + this.form.to + "\r\n" +
-                "Cc: " + this.form.cc + "\r\n" +
-                "Subject: " + this.form.subject + "\r\n\r\n";
-
-            const message2 =
-                "From: " + this.user.emailAddress + "\n" +
-                "To: " + this.form.to + "\n" +
-                "Cc: " + this.form.cc + "\n" +
-                "Content-Type: application/json; charset=UTF-8" + "\n" +
-                "X-Upload-Content-Type: message/rfc822" + "\n" +
-                "Subject: " + this.form.subject + "\n\n\n" +
-                this.editorData;
-
-// The body needs to be base64url encoded.
-            const encodedMessage = btoa(message2)
-
-            const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-
-            if (label === "DRAFT") {
-                this.$gapi.getGapiClient().then((gapi) => {
-                    gapi.client.gmail.users.drafts.create({
-                        userId: 'me',
-                        message: {
-                            labelIds: [
-                                label
-                            ],
-                            payload: {
-                                mimeType: 'text/html',
-                            },
-                            raw: reallyEncodedMessage
-                        }
-
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
-                        this.$router.push({name: "Home"});
-                        this.flash("success", "L'email a été enregistré");
-
-                    })
-                });
-            } else {
-                this.$gapi.getGapiClient().then((gapi) => {
-                    gapi.client.gmail.users.messages.send({
-                        uploadType: "resumable",
-                        userId: 'me',
-                        labelIds: [
-                            label
-                        ],
-                        payload: {
-                            mimeType: 'text/html',
-                        },
-                        raw: reallyEncodedMessage
-                        // eslint-disable-next-line no-unused-vars
-                    }).then((response) => {
-                        this.$router.push({name: "Home"});
-                        this.flash("success", "L'email a été envoyé");
-                    })
-                        .catch(err => {
-                            this.flash("error", err.message, "L'email n'a pas été envoyé");
+                            }).then(() => {
+                                this.flash("success", "L'email a été envoyé");
+                                this.$router.push({name: "Home"});
+                            })
+                                .catch(err => {
+                                    this.flash("error", err.message, "L'email n'a pas été envoyé");
+                                });
                         });
-                });
-            }
+                    }
+                })
+                .catch((error) => {
 
+                    this.flash("error", error.message, "Erreur de traitement des fichiers");
+                });
         },
         submit() {
             const file = this.$refs.file.files[0];
             if (!file) {
-                this.sendMail();
+                this.sendEmail();
             } else {
-                console.log (file);
-                this.sendMailWithAttachmentSimple();
+                this.sendEmailWithAttachments();
             }
 
         }

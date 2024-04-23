@@ -38,6 +38,32 @@
                             <div class="panel-body panel-csm">
                                 <div id="message-container">
                                     <div v-html="message.textHtml"></div>
+                                    <vue-html2pdf
+                                        :show-layout="false"
+                                        :float-layout="true"
+                                        :enable-download="true"
+                                        :preview-modal="false"
+                                        :filename="message.headers.subject"
+                                        :paginate-elements-by-height="1100"
+                                        :pdf-quality="2"
+                                        pdf-format="a4"
+                                        pdf-orientation="portrait"
+                                        pdf-content-width="800px"
+                                        :manual-pagination="false"
+                                        html-to-pdf-options="{enableLinks:true}"
+
+                                        @progress="onProgress($event)"
+                                        @startPagination="startPagination()"
+                                        @hasPaginated="hasPaginated()"
+                                        @beforeDownload="beforeDownload($event)"
+                                        @hasDownloaded="hasDownloaded($event)"
+                                        ref="html2Pdf"
+                                    >
+                                        <section slot="pdf-content">
+                                            <div v-html="message.textHtml"></div>
+                                        </section>
+
+                                    </vue-html2pdf>
                                 </div>
                             </div>
 
@@ -65,7 +91,8 @@
                                                        :data-attachment-message-id="message.id"
                                                        :data-attachment-id="attachment.attachmentId"
                                                        :data-attachment-size="attachment.size"
-                                                       :data-attachment-mime-type="attachment.mimeType">{{
+                                                       :data-attachment-mime-type="attachment.mimeType">
+                                                        {{
                                                             attachment.filename
                                                         }}</a>
                                                 </div>
@@ -99,20 +126,13 @@
 </template>
 
 <script>
-//import moment from "moment" ;
 import TopBar from "../components/TopBar";
 import SideBar from "../components/SideBar" ;
 import Footer from "../components/Footer";
 // Load the full build.
 var array = require('lodash/array');
-//const {jsPDF} = require("jspdf"); // will automatically load the node version
-/*
-const html2pdf = require("html2pdf.js");
-
-import html2PDF from 'jspdf-html2canvas';
-*/
 import {mapState} from "vuex" ;
-
+import VueHtml2pdf from 'vue-html2pdf'
 
 //moment.locale('fr');
 var parseMessage = require('gmail-api-parse-message');
@@ -121,7 +141,7 @@ export default {
     data() {
         return {
             message: null,
-            messageId: this.$route.query.messageId || undefined,
+            messageId: this.$route.params.messageId || this.$route.query.messageId || undefined,
         }
     },
 
@@ -135,7 +155,7 @@ export default {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                }) ;
+                });
         },
         dateTo(dateField) {
             if (!dateField) return '';
@@ -144,7 +164,7 @@ export default {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                }) ;
+                });
             //return dayjs().to(dayjs(+dateField)) ;
             //return moment().to(+dateField);
 
@@ -157,7 +177,7 @@ export default {
     components: {
         TopBar,
         SideBar,
-        Footer
+        Footer, VueHtml2pdf
     },
     created() {
         this.showMessage();
@@ -167,32 +187,28 @@ export default {
          * Pour imprimer le message au format pdf. Est instable pour le moment
          */
         printAsPdf() {
-            return false ;
-            //const message = document.querySelector('#message-container');
+            this.$refs.html2Pdf.generatePdf()
+        },
+        onProgress(event) {
+            console.log(event)
 
-            /*            const doc = new jsPDF();
+        },
+        startPagination() {
 
-                        doc.html(message, {
-                            callback: function (doc) {
-                                doc.save("Message.pdf"); // will save the file in the current working directory
-                            },
-                            x: 10,
-                            y: 10
-                        });
-                        */
+        }, hasPaginated() {
 
-            // This will implicitly create the canvas and PDF objects before saving.
-/*
-            html2pdf().from(message).save();
-            html2PDF(message, {
-                jsPDF: {
-                    format: 'a4',
-                },
-                imageType: 'image/jpeg',
-                output: './pdf/generate.pdf'
-            });
-
-*/
+        }, beforeDownload(event) {
+            console.log(event)
+        },
+        hasDownloaded(event) {
+            console.log(event)
+        },
+        isImage(mime = '') {
+            const mimeBase = mime.split('/')[0];
+            if (mimeBase === 'image') {
+                return true;
+            }
+            return false;
         },
         /**
          * Retourne la classe font Awesome apprropré en fonction du fichier.
@@ -253,10 +269,21 @@ export default {
             const blob = new Blob(byteArrays, {type: contentType})
             return blob
         },
+        async getImageData(messageId, attachmentId) {
+            const gapi = await this.$gapi.getGapiClient();
+            const response = await gapi.client.gmail.users.messages.attachments.get({
+                userId: 'me',
+                messageId: messageId,
+                id: attachmentId
+            });
+
+            let result = await response.result.data;
+            return result;
+        },
         /**
          * Télécharge une pièce jointe
          */
-        // eslint-disable-next-line no-unused-vars
+     
         downloadAttachmentFile(event) {
             this.$Progress.start();
             let current = event.currentTarget;
@@ -316,12 +343,10 @@ export default {
                 if (messages.length > 1) {
                     if (messages.length > index) {
                         newMessageId = messages[index + 1].id
-                        console.log(newMessageId) ;
                         this.messageId = newMessageId;
                     } else if (messages.length === index) {
                         newMessageId = this.messages[index - 1].id;
                         this.messageId = newMessageId;
-                        console.log(newMessageId) ;
                     }
                     // Remove index from messages
                     //messages.splice(index, 1);
@@ -338,9 +363,7 @@ export default {
                 //On affiche le nouveau message
                 //this.showMessage();
             } else {
-                console.log(this.messageId);
                 this.$router.push({name: 'Home'});
-                //this.$router.push({name: 'Home'});
             }
         },
         /**
@@ -385,10 +408,8 @@ export default {
                 gapi.client.gmail.users.messages.delete({
                     userId: 'me',
                     id: this.message.id
-                }).then((response) => {
-                    console.log(response.result);
+                }).then(() => {
                     this.showAnotherMessage(this.message.id, this.messages);
-
                 }).catch((err) => {
                     this.flash("error", "Erreur : ", err.message);
                 });
@@ -400,7 +421,6 @@ export default {
          */
         showMessage() {
             if (typeof this.messageId === "undefined") {
-                console.log(this.messageId);
                 this.$router.push('Home');
             }
             //let messageId = event.target.getAttribute('data-message-id');
