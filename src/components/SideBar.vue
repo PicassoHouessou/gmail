@@ -41,14 +41,7 @@ li a.router-link-exact-active {
 }
 </style>
 <script>
-//import gapi from './../api'
 import {mapState} from "vuex" ;
-//import moment from "moment";
-//import AttachmentInfo from "@/Attachment";
-
-
-// eslint-disable-next-line no-unused-vars
-var parseMessage = require('gmail-api-parse-message');
 
 export default {
     name: 'SideBar',
@@ -64,7 +57,6 @@ export default {
         ...mapState(['total', 'labels'])
     },
     beforeMount() {
-
 
         if (this.labels.length < 2) {
             this.getAllLabels();
@@ -122,135 +114,8 @@ export default {
             } else {
                 return 'fa-play';
             }
-            /*
-            switch (name) {
-              case 'INBOX':
-                icon = 'fa-envelope';
-                break;
-              case 'SENT':
-                icon = 'fa-envelope'
-                break;
-              case 'IMPORTANT' :
-                icon = 'fa-envelope'
-                break;
-              case 'TRASH' :
-                icon = 'trash'
-                break;
-              case 'DRAFT' :
-                icon = 'fa-envelope';
-                break;
-              case 'SPAM' :
-                icon = 'fa-envelope';
-                break;
-              default :
-                icon = 'fa-angle-double-up';
-            }
-            return icon;
-            */
+
         },
-        getMessageInLabels(event) {
-            let labelName = event.currentTarget.getAttribute('data-label-id');
-            labelName = labelName.toUpperCase();
-            this.$router.push({name: 'Home', params: {labelId: labelName}});
-            this.$store.dispatch('getAllMessageInLabel', labelName);
-            /*
-                        // eslint-disable-next-line no-undef
-                        gapi.client.gmail.users.messages.list({
-                            'userId': 'me',
-                            'labelIds': labelName
-                        }).then((response) => {
-                                this.localTotal = response.result.resultSizeEstimate;
-                                var responses = response.result.messages;
-                                let messages = [];
-                                if ( typeof  responses !== "undefined") {
-                                    for (var i = 0; i < responses.length; i++) {
-                                        // eslint-disable-next-line no-undef
-                                        gapi.client.gmail.users.messages.get({
-                                            'userId': 'me',
-                                            'id': (responses[i]).id
-                                        }).then((response) => {
-                                                let result = parseMessage(response.result);
-                                                //let attachmentInfo = null ;
-                                                if (typeof result.attachments !== "undefined") {
-                                                    //attachmentInfo = new AttachmentInfo(result.attachments) ;
-                                                    Object.defineProperty(result, 'attachmentInfo', new AttachmentInfo(result.attachments));
-                                                } else {
-                                                    //attachmentInfo = new AttachmentInfo([] ) ;
-                                                    Object.defineProperty(result, 'attachmentInfo', new AttachmentInfo([]));
-                                                }
-                                                //result.internalDate = moment().to(+result.internalDate);
-                                                messages.push(result);
-                                            }
-                                        ).catch(err => console.log(err));
-                                    }
-                                    console.log(messages) ;
-                                    this.$store.dispatch('setMessages', messages);
-                                }
-                            }
-                        ).catch((err) => console.log(err));
-            */
-        },
-        getAllMessageInLabel(event) {
-            event = event || '';
-            let labelName = null;
-            if (typeof event === "object") {
-                labelName = event.currentTarget.getAttribute('data-label-id');
-                labelName = labelName.toUpperCase();
-
-            } else {
-                labelName = 'INBOX';
-
-            }
-
-
-            this.$router.push({name: 'Home', query: {labelId: labelName}});
-            //this.$router.go({name: 'Home', query: {labelId: labelName}});
-
-            this.$gapi.getGapiClient().then((gapi) => {
-                gapi.client.gmail.users.messages.list({
-                    'userId': 'me',
-                    'labelIds': labelName
-                }).then((response) => {
-                        this.$store.commit('SET_TOTAL_MESSAGE', response.result.resultSizeEstimate);
-
-                        var responses = response.result.messages;
-                        //let messages = [];
-                        if (typeof responses !== "undefined") {
-                            this.$store.dispatch('setMessages');
-                            for (let i = 0; i < responses.length; i++) {
-                                // eslint-disable-next-line no-undef
-                                gapi.client.gmail.users.messages.get({
-                                    'userId': 'me',
-                                    'id': (responses[i]).id
-                                }).then((response) => {
-                                        let result = parseMessage(response.result);
-                                        /*
-                                        let index = _.findIndex(this.messages, function (o) {
-                                            return o.id == result.id;
-                                        });
-                                        if (index !== -1) {
-                                            this.$store.dispatch('pushMessage', result);
-                                        } else {
-                                            this.$store.dispatch('updateMessage', result);
-                                        }*/
-                                        //messages.push(result);
-
-                                        //console.log(result);
-                                        //Tres important on met à jour le data store
-
-                                        this.$store.dispatch('pushMessage', result);
-
-                                    }
-                                ).catch(err => console.log(err));
-                            }
-
-                        }
-                    }
-                ).catch((err) => console.log(err));
-
-            });
-        },
-
         getAllLabels() {
             this.$gapi.getGapiClient().then((gapi) => {
                 gapi.client.gmail.users.labels.list({
