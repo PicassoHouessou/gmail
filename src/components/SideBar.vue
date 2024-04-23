@@ -89,10 +89,10 @@ export default {
     methods: {
         async logout() {
             await this.$gapi.logout();
+            this.$router.push({name: 'Home'});
             localStorage.clear();
             sessionStorage.clear();
-
-
+            window.location.reload();
         },
         onError() {
             window.addEventListener("error", function (e) {

@@ -22,7 +22,8 @@ export default {
             if (!this.$gapi.isAuthenticated()) {
                 try {
                     await this.$gapi.login();
-                    this.$emit('close')
+                    this.$emit('close');
+                    window.location.reload();
                 } catch (err) {
                     console.error("Login call failed: %s", err.message);
                 }

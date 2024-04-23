@@ -38,32 +38,32 @@
                             <div class="panel-body panel-csm">
                                 <div id="message-container">
                                     <div v-html="message.textHtml"></div>
-                                  <vue-html2pdf
-                                      :show-layout="false"
-                                      :float-layout="true"
-                                      :enable-download="true"
-                                      :preview-modal="false"
-                                      :filename="message.headers.subject"
-                                      :paginate-elements-by-height="1100"
-                                      :pdf-quality="2"
-                                      pdf-format="a4"
-                                      pdf-orientation="portrait"
-                                      pdf-content-width="800px"
-                                      :manual-pagination="false"
-                                      html-to-pdf-options="{enableLinks:true}"
+                                    <vue-html2pdf
+                                        :show-layout="false"
+                                        :float-layout="true"
+                                        :enable-download="true"
+                                        :preview-modal="false"
+                                        :filename="message.headers.subject"
+                                        :paginate-elements-by-height="1100"
+                                        :pdf-quality="2"
+                                        pdf-format="a4"
+                                        pdf-orientation="portrait"
+                                        pdf-content-width="800px"
+                                        :manual-pagination="false"
+                                        html-to-pdf-options="{enableLinks:true}"
 
-                                      @progress="onProgress($event)"
-                                      @startPagination="startPagination()"
-                                      @hasPaginated="hasPaginated()"
-                                      @beforeDownload="beforeDownload($event)"
-                                      @hasDownloaded="hasDownloaded($event)"
-                                      ref="html2Pdf"
-                                  >
-                                    <section slot="pdf-content">
-                                      <div v-html="message.textHtml"></div>
-                                  </section>
+                                        @progress="onProgress($event)"
+                                        @startPagination="startPagination()"
+                                        @hasPaginated="hasPaginated()"
+                                        @beforeDownload="beforeDownload($event)"
+                                        @hasDownloaded="hasDownloaded($event)"
+                                        ref="html2Pdf"
+                                    >
+                                        <section slot="pdf-content">
+                                            <div v-html="message.textHtml"></div>
+                                        </section>
 
-                                  </vue-html2pdf>
+                                    </vue-html2pdf>
                                 </div>
                             </div>
 
@@ -87,14 +87,14 @@
                                                        :class="getIconForAttachment(attachment.mimeType)"></i>
                                                 </div>
                                                 <div class="panel-footer">
-                                                  <a href="" @click.prevent="downloadAttachmentFile"
-                                                     :data-attachment-message-id="message.id"
-                                                     :data-attachment-id="attachment.attachmentId"
-                                                     :data-attachment-size="attachment.size"
-                                                     :data-attachment-mime-type="attachment.mimeType">
-                                                    {{
-                                                      attachment.filename
-                                                    }}</a>
+                                                    <a href="" @click.prevent="downloadAttachmentFile"
+                                                       :data-attachment-message-id="message.id"
+                                                       :data-attachment-id="attachment.attachmentId"
+                                                       :data-attachment-size="attachment.size"
+                                                       :data-attachment-mime-type="attachment.mimeType">
+                                                        {{
+                                                            attachment.filename
+                                                        }}</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -141,7 +141,7 @@ export default {
     data() {
         return {
             message: null,
-            messageId: this.$route.params.messageId|| this.$route.query.messageId || undefined,
+            messageId: this.$route.params.messageId || this.$route.query.messageId || undefined,
         }
     },
 
@@ -155,7 +155,7 @@ export default {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                }) ;
+                });
         },
         dateTo(dateField) {
             if (!dateField) return '';
@@ -164,7 +164,7 @@ export default {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                }) ;
+                });
             //return dayjs().to(dayjs(+dateField)) ;
             //return moment().to(+dateField);
 
@@ -177,7 +177,7 @@ export default {
     components: {
         TopBar,
         SideBar,
-        Footer,VueHtml2pdf
+        Footer, VueHtml2pdf
     },
     created() {
         this.showMessage();
@@ -186,30 +186,30 @@ export default {
         /**
          * Pour imprimer le message au format pdf. Est instable pour le moment
          */
-        printAsPdf () {
-          this.$refs.html2Pdf.generatePdf()
+        printAsPdf() {
+            this.$refs.html2Pdf.generatePdf()
         },
-      onProgress(event){
-          console.log(event)
+        onProgress(event) {
+            console.log(event)
 
-      },
-      startPagination(){
+        },
+        startPagination() {
 
-      },hasPaginated(){
+        }, hasPaginated() {
 
-      },beforeDownload(event){
-        console.log(event)
-      },
-      hasDownloaded(event){
-        console.log(event)
-      },
-      isImage(mime = '') {
-        const mimeBase = mime.split('/')[0];
-       if (mimeBase === 'image') {
-          return true;
-        }
-       return false;
-      },
+        }, beforeDownload(event) {
+            console.log(event)
+        },
+        hasDownloaded(event) {
+            console.log(event)
+        },
+        isImage(mime = '') {
+            const mimeBase = mime.split('/')[0];
+            if (mimeBase === 'image') {
+                return true;
+            }
+            return false;
+        },
         /**
          * Retourne la classe font Awesome apprropré en fonction du fichier.
          * @param mime {string} Le mime type du fichier
@@ -269,22 +269,21 @@ export default {
             const blob = new Blob(byteArrays, {type: contentType})
             return blob
         },
-      async getImageData(messageId,attachmentId) {
-      const gapi= await this.$gapi.getGapiClient();
-        const response = await gapi.client.gmail.users.messages.attachments.get({
-          userId: 'me',
-          messageId: messageId,
-          id: attachmentId
-        });
+        async getImageData(messageId, attachmentId) {
+            const gapi = await this.$gapi.getGapiClient();
+            const response = await gapi.client.gmail.users.messages.attachments.get({
+                userId: 'me',
+                messageId: messageId,
+                id: attachmentId
+            });
 
-        let result = await response.result.data;
-        return result;
-        //let dataBase64Rep = result.data.replace(/-/g, '+').replace(/_/g, '/');
-      },
-      /**
+            let result = await response.result.data;
+            return result;
+        },
+        /**
          * Télécharge une pièce jointe
          */
-        // eslint-disable-next-line no-unused-vars
+     
         downloadAttachmentFile(event) {
             this.$Progress.start();
             let current = event.currentTarget;

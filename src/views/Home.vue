@@ -99,14 +99,11 @@
 </template>
 
 <script>
-//import gapi from './../api'
 import TopBar from "../components/TopBar";
 import SideBar from "../components/SideBar" ;
 import Footer from "../components/Footer";
-//import moment from "moment";
 import {mapState} from "vuex" ;
 
-//.locale('fr');
 var array = require("lodash/array");
 var parseMessage = require('gmail-api-parse-message');
 export default {
@@ -312,70 +309,37 @@ export default {
             }
             */
             let labelName = this.labelId;
-            // eslint-disable-next-line no-undef
-            gapi.client.gmail.users.messages.list({
-                'userId': 'me',
-                'labelIds': labelName
-            }).then((response) => {
-                    this.localTotal = response.result.resultSizeEstimate;
-                    var responses = response.result.messages;
-                    //let messages = [];
-                    if (typeof responses !== "undefined") {
+            this.$gapi.getGapiClient().then((gapi) => {
+                gapi.client.gmail.users.messages.list({
+                    'userId': 'me',
+                    'labelIds': labelName
+                }).then((response) => {
+                        this.localTotal = response.result.resultSizeEstimate;
+                        var responses = response.result.messages;
+                        //let messages = [];
+                        if (typeof responses !== "undefined") {
 
-                        this.$store.dispatch('setMessages', []);
-                        for (let i = 0; i < responses.length; i++) {
-                            // eslint-disable-next-line no-undef
-                            gapi.client.gmail.users.messages.get({
-                                'userId': 'me',
-                                'id': (responses[i]).id
-                            }).then((response) => {
-                                    let result = parseMessage(response.result);
+                            this.$store.dispatch('setMessages', []);
+                            for (let i = 0; i < responses.length; i++) {
+                                // eslint-disable-next-line no-undef
+                                gapi.client.gmail.users.messages.get({
+                                    'userId': 'me',
+                                    'id': (responses[i]).id
+                                }).then((response) => {
+                                        let result = parseMessage(response.result);
+                                        //messages.push(result);
+                                        //Tres important on met à jour le data store
+                                        this.$store.dispatch('pushMessage', result);
 
-                                    //messages.push(result);
-
-                                    console.log(result);
-                                    //Tres important on met à jour le data store
-                                    this.$store.dispatch('pushMessage', result);
-
-                                }
-                            ).catch(err => console.log(err));
-                        }
-
-                    }
-                }
-            ).catch((err) => console.log(err));
-        },
-
-        inboxx() {
-            // eslint-disable-next-line no-undef
-            gapi.client.gmail.users.messages.list({
-                'userId': 'me',
-                'labelIds': this.labelId
-            }).then((response) => {
-                    this.total = response.result.resultSizeEstimate;
-                    let responses = response.result.messages;
-                    //let result = [] ;
-                    let messages = [];
-                    for (var i = 0; i < responses.length; i++) {
-                        // eslint-disable-next-line no-undef
-                        gapi.client.gmail.users.messages.get({
-                            'userId': 'me',
-                            'id': (responses[i]).id
-                        }).then((response) => {
-                                //let result = response.result;
-                                let result = parseMessage(response.result);
-
-                                //result.internalDate = moment().to(+result.internalDate);
-
-                                messages.push(result);
-
+                                    }
+                                ).catch(err => console.log(err));
                             }
-                        ).catch(err => console.log(err));
+
+                        }
                     }
-                    this.$store.dispatch('setMessages', messages);
-                }
-            ).catch((err) => console.log(err));
-        }
+                ).catch((err) => console.log(err));
+            });
+        },
 
     }
 }
