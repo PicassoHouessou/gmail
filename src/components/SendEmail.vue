@@ -182,7 +182,7 @@ export default {
             })
         },
         save() {
-            this.sendMail('DRAFT');
+            this.sendEmail('DRAFT');
 
         }
         ,
@@ -191,8 +191,7 @@ export default {
             this.$router.push({name: 'Home'});
 
         },
-
-        sendMail(label = '') {
+        sendEmail(label = '') {
             console.log(label);
             const message =
                 "From: " + this.user.emailAddress + "\n" +
@@ -237,7 +236,6 @@ export default {
                             mimeType: 'text/html',
                         },
                         raw: reallyEncodedMessage
-                        // eslint-disable-next-line no-unused-vars
                     }).then(() => {
                         this.$router.push({name: "Home"});
                         this.flash("success", "L'email a été envoyé");
@@ -249,7 +247,7 @@ export default {
             }
 
         },
-        sendMailWithAttachments(label = '') {
+        sendEmailWithAttachments(label = '') {
             const files = this.$refs.file.files;
             const attachments = [];
 
@@ -365,102 +363,13 @@ export default {
                     console.error("Error processing files:", error);
                 });
         },
-        sendMailWithAttachmentSimple2(label = '') {
-            const file = this.$refs.file.files[0];
-
-            const reader = new FileReader();
-
-            reader.onload = (event) => {
-                const fileData = event.target.result;
-                const encodedFileData = btoa(fileData);
-
-                const editorDataEncoded = btoa(this.editorData)
-                /* const encodedFileData = btoa(file).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');*/
-                const reallyEncodedEditorData = editorDataEncoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-                // eslint-disable-next-line no-unused-vars
-                const size = encodedFileData + length + reallyEncodedEditorData.length
-                const message2 =
-                    "Content-Type:  multipart/related ;  boundary=foo_bar_baz" + "\n" +
-                    "MIME-Version: 1.0" + "\n" +
-                    "From: " + this.user.emailAddress + "\n" +
-                    "To: " + this.form.to + "\n" +
-                    //"Cc: " + this.form.cc + "\n" +
-                    "Subject: " + this.form.subject + "\n\n" +
-                    "Content-Length:  " + size + "\n\n" +
-                    "--foo_bar_baz" + "\n" +
-                    "Content-Type: text/html" + "\n\n" +
-                    this.editorData + "\n\n" +
-
-                    "--foo_bar_baz" + "\n" +
-                    "Content-Type: " + file.type + ";name=\"" + file.name + "\"\n" +
-                    'Content-Transfer-Encoding: base64' + "\n" +
-                    "Content-Disposition: attachment; filename=\"" + file.name + "\"\n\n" +
-                    encodedFileData + "\n\n" +
-                    "--foo_bar_baz--";
-
-                // The body needs to be base64url encoded.
-                const encodedMessage = btoa(message2);
-                //const reallyEncodedMessage = encodedMessage ;
-                const reallyEncodedMessage = encodedMessage.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-
-                if (label === "DRAFT") {
-                    this.$gapi.getGapiClient().then((gapi) => {
-                        gapi.client.gmail.users.drafts.create({
-                            userId: 'me',
-                            message: {
-                                labelIds: [
-                                    label
-                                ],
-                                raw: reallyEncodedMessage
-                            }
-                        }).then((response) => {
-                            console.log(response);
-                            /*
-                        this.$router.push({name: "Home"}); */
-                            this.flash("success", "L'email a été enregistré");
-
-                        }).catch((err) => {
-                            console.log(err);
-                            this.flash("error", err.message);
-                        })
-                    });
-                } else {
-                    this.$gapi.getGapiClient().then((gapi) => {
-                        gapi.client.gmail.users.messages.send({
-                            userId: 'me',
-                            /*
-                            labelIds: [
-                                label
-                            ],
-                            payload: {
-                                mimeType: 'text/html',
-                            },
-                            */
-                            raw: reallyEncodedMessage
-                            // eslint-disable-next-line no-unused-vars
-                        }).then((response) => {
-                            console.log(response)
-                            /*
-                        this.$router.push({name: "Home"});*/
-                            this.flash("success", "L'email a été envoyé");
-                        })
-                            .catch(err => {
-                                console.log(err);
-                                this.flash("error", err.message, "L'email n'a pas été envoyé");
-                            });
-                    });
-                }
-            }
-            reader.readAsBinaryString(file);
-
-        },
         submit() {
             const file = this.$refs.file.files[0];
             if (!file) {
-                this.sendMail();
+                this.sendEmail();
             } else {
                 console.log(file);
-                this.sendMailWithAttachments();
+                this.sendEmailWithAttachments();
             }
 
         }
