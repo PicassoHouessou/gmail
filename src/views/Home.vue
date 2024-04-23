@@ -5,7 +5,6 @@
             <div class="container-fluid">
                 <div class="row">
                     <SideBar></SideBar>
-
                     <div class="col-md-9 col-md-9 col-sm-9 col-xs-12 mg-t-15">
                         <div class="hpanel mg-b-15">
                             <div class="panel-heading hbuilt mailbox-hd">
@@ -15,7 +14,7 @@
                                                placeholder="Rechercher dans les messages..." v-model="searchBar.item"
                                                @input.prevent="search">
                                         <span class="input-group-btn">
-						<button type="button" class="btn btn btn-default">Recherche </button>
+						<button type="button" class="btn btn btn-default">Rechercher</button>
 					</span>
                                     </div>
                                 </div>

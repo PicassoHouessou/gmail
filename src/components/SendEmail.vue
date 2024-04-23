@@ -73,11 +73,16 @@
                     <button class="btn btn-primary ft-compse" type="submit">Envoyer</button>
                     <!--            <button class="btn btn-primary ft-compse" @click.prevent="submit" type="submit">Envoyer</button>-->
                     <div class="btn-group">
-
                         <input type="file" ref="file" id="attachmentFile" @change="handleAttachment"
                                multiple="multiple">
-                        <label class="btn btn-default" for="attachmentFile"><i class="fa fa-paperclip"></i></label>
+                        <label class="btn btn-default" for="attachmentFile"><i class="fa fa-paperclip"></i>
+                        </label>
+
                         <!--                <button class="btn btn-default" @click.prevent="addFile"><i class="fa fa-paperclip"></i></button>-->
+                    </div>
+                    <div style="margin: auto;" v-if="selectedFiles.length > 0">{{
+                            selectedFiles.length > 1 ? +" fichiers ajoutés" : " fichier ajouté"
+                        }}
                     </div>
 
                 </div>
@@ -132,9 +137,14 @@ export default {
     mounted() {
         this.getUserInfo();
     },
+    computed: {
+        selectedFileNames() {
+            return this.selectedFiles.map(file => file.name).join(', ');
+        }
+    },
     data() {
         return {
-
+            selectedFiles: [],
             user: null,
             editor: ClassicEditor,
             editorData: '',
@@ -164,8 +174,17 @@ export default {
             });
         }
         ,
-        handleAttachment() {
+        handleAttachment(event) {
+            // Reset selectedFiles array
+            this.selectedFiles = [];
 
+            // Get selected files
+            const files = event.target.files;
+
+            // Iterate over selected files and add them to selectedFiles array
+            for (let i = 0; i < files.length; i++) {
+                this.selectedFiles.push(files[i]);
+            }
         },
         addFile() {
             document.querySelector('#attachmentFile').click();
