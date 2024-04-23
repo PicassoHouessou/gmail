@@ -1,10 +1,9 @@
 import Vue from "vue";
 import VueGapi from 'vue-gapi' ;
 
-//import VueGAPI from "vue-gapi";
 // Client ID and API key from the Developer Console
-const CLIENT_ID = '985255929949-3ubo34cfhumtcbj3173ld657sk19nel3.apps.googleusercontent.com';
-const API_KEY = 'yKsPbzhhpLv9DJTffaBqRQF-';
+const CLIENT_ID = process.env.VUE_APP_GMAIL_API_CLIENT;
+const API_KEY = process.env.VUE_APP_GMAIL_API_KEY;
 
 // Array of API discovery doc URLs for APIs used by the quickstart
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"];
@@ -25,5 +24,4 @@ const clientConfig = {
 }
 Vue.use(VueGapi, clientConfig);
 
-//Vue.use(VueGAPI, clientConfig);
-export default VueGapi ;
+export default VueGapi;

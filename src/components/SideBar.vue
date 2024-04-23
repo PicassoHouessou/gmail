@@ -8,6 +8,9 @@
                             <i class="fa fa-plus-circle"></i> Nouveau message
                         </router-link>
                     </li>
+                    <li>
+                        <a href="#" @click.prevent="logout"><i class="fa fa-sign-out"></i> Se déconnecter</a>
+                    </li>
                     <hr>
                     <li v-for="label in labels" :key="label.id" :data-label-id="label.id"
                     >
@@ -21,7 +24,6 @@
                 </ul>
                 <hr>
                 <ul class="mailbox-list">
-
                     <li>
                         <a href="#"><i class="fa fa-gears"></i> Paramètres</a>
                     </li>
@@ -85,6 +87,13 @@ export default {
         clearTimeout(this.$options.callBackFunction);
     },
     methods: {
+        async logout() {
+            await this.$gapi.logout();
+            localStorage.clear();
+            sessionStorage.clear();
+
+
+        },
         onError() {
             window.addEventListener("error", function (e) {
                 alert("Error occurred: " + e.error.message);
